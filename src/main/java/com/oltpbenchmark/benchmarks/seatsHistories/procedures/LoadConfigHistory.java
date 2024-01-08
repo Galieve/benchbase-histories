@@ -20,7 +20,7 @@ package com.oltpbenchmark.benchmarks.seatsHistories.procedures;
 import com.oltpbenchmark.api.Procedure;
 import com.oltpbenchmark.api.SQLStmt;
 import com.oltpbenchmark.apiHistory.events.Event;
-import com.oltpbenchmark.benchmarks.seatsHistories.SEATSConstants;
+import com.oltpbenchmark.benchmarks.seatsHistories.SEATSConstantsHistory;
 import com.oltpbenchmark.util.SQLUtil;
 
 import java.sql.Connection;
@@ -37,30 +37,30 @@ public class LoadConfigHistory extends Procedure {
     // -----------------------------------------------------------------
 
     public final SQLStmt getConfigProfile = new SQLStmt(
-            "SELECT * FROM " + SEATSConstants.TABLENAME_CONFIG_PROFILE
+            "SELECT * FROM " + SEATSConstantsHistory.TABLENAME_CONFIG_PROFILE
     );
 
     public final SQLStmt getConfigHistogram = new SQLStmt(
-            "SELECT * FROM " + SEATSConstants.TABLENAME_CONFIG_HISTOGRAMS
+            "SELECT * FROM " + SEATSConstantsHistory.TABLENAME_CONFIG_HISTOGRAMS
     );
 
     public final SQLStmt getCountryCodes = new SQLStmt(
-            "SELECT CO_ID, CO_CODE_3 FROM " + SEATSConstants.TABLENAME_COUNTRY
+            "SELECT CO_ID, CO_CODE_3 FROM " + SEATSConstantsHistory.TABLENAME_COUNTRY
     );
 
     public final SQLStmt getAirportCodes = new SQLStmt(
-            "SELECT AP_ID, AP_CODE FROM " + SEATSConstants.TABLENAME_AIRPORT
+            "SELECT AP_ID, AP_CODE FROM " + SEATSConstantsHistory.TABLENAME_AIRPORT
     );
 
     public final SQLStmt getAirlineCodes = new SQLStmt(
-            "SELECT AL_ID, AL_IATA_CODE FROM " + SEATSConstants.TABLENAME_AIRLINE +
+            "SELECT AL_ID, AL_IATA_CODE FROM " + SEATSConstantsHistory.TABLENAME_AIRLINE +
             " WHERE AL_IATA_CODE != ''"
     );
 
     public final SQLStmt getFlights = new SQLStmt(
-            "SELECT f_id FROM " + SEATSConstants.TABLENAME_FLIGHT +
+            "SELECT f_id FROM " + SEATSConstantsHistory.TABLENAME_FLIGHT +
             " ORDER BY F_DEPART_TIME DESC " +
-            " LIMIT " + SEATSConstants.CACHE_LIMIT_FLIGHT_IDS
+            " LIMIT " + SEATSConstantsHistory.CACHE_LIMIT_FLIGHT_IDS
     );
 
     public Config run(Connection conn, ArrayList<Event> events, int id, int so) throws SQLException {

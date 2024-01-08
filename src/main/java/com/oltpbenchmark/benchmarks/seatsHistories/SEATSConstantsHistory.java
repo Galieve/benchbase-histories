@@ -20,7 +20,7 @@ package com.oltpbenchmark.benchmarks.seatsHistories;
 
 import java.util.regex.Pattern;
 
-public abstract class SEATSConstants {
+public abstract class SEATSConstantsHistory {
 
     // ----------------------------------------------------------------
     // STORED PROCEDURE EXECUTION FREQUENCIES (0% - 100%)
@@ -232,9 +232,9 @@ public abstract class SEATSConstants {
      * Tables that are loaded from data files
      */
     public static final String[] TABLES_DATAFILES = {
-            SEATSConstants.TABLENAME_COUNTRY,
-            SEATSConstants.TABLENAME_AIRPORT,
-            SEATSConstants.TABLENAME_AIRLINE,
+            SEATSConstantsHistory.TABLENAME_COUNTRY,
+            SEATSConstantsHistory.TABLENAME_AIRPORT,
+            SEATSConstantsHistory.TABLENAME_AIRLINE,
     };
 
     /**
@@ -242,27 +242,27 @@ public abstract class SEATSConstants {
      * IMPORTANT: FLIGHT must come before FREQUENT_FLYER
      */
     public static final String[] TABLES_SCALING = {
-            SEATSConstants.TABLENAME_CUSTOMER,
-            SEATSConstants.TABLENAME_AIRPORT_DISTANCE,
-            SEATSConstants.TABLENAME_FLIGHT,
-            SEATSConstants.TABLENAME_FREQUENT_FLYER,
-            SEATSConstants.TABLENAME_RESERVATION,
+            SEATSConstantsHistory.TABLENAME_CUSTOMER,
+            SEATSConstantsHistory.TABLENAME_AIRPORT_DISTANCE,
+            SEATSConstantsHistory.TABLENAME_FLIGHT,
+            SEATSConstantsHistory.TABLENAME_FREQUENT_FLYER,
+            SEATSConstantsHistory.TABLENAME_RESERVATION,
     };
 
     /**
      * Configuration Tables
      */
     public static final String[] TABLES_CONFIG = {
-            SEATSConstants.TABLENAME_CONFIG_PROFILE,
-            SEATSConstants.TABLENAME_CONFIG_HISTOGRAMS,
+            SEATSConstantsHistory.TABLENAME_CONFIG_PROFILE,
+            SEATSConstantsHistory.TABLENAME_CONFIG_HISTOGRAMS,
     };
 
     /**
      * Histograms generated from data files
      */
     public static final String[] HISTOGRAM_DATA_FILES = {
-            SEATSConstants.HISTOGRAM_FLIGHTS_PER_AIRPORT,
-            SEATSConstants.HISTOGRAM_FLIGHTS_PER_DEPART_TIMES,
+            SEATSConstantsHistory.HISTOGRAM_FLIGHTS_PER_AIRPORT,
+            SEATSConstantsHistory.HISTOGRAM_FLIGHTS_PER_DEPART_TIMES,
     };
 
     /**

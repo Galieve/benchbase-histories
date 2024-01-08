@@ -21,7 +21,7 @@ package com.oltpbenchmark.benchmarks.seatsHistories.procedures;
 import com.oltpbenchmark.api.Procedure;
 import com.oltpbenchmark.api.SQLStmt;
 import com.oltpbenchmark.apiHistory.events.Event;
-import com.oltpbenchmark.benchmarks.seatsHistories.SEATSConstants;
+import com.oltpbenchmark.benchmarks.seatsHistories.SEATSConstantsHistory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,13 +37,13 @@ public class DeleteReservationHistory extends Procedure {
 
     public final SQLStmt GetCustomerByIdStr = new SQLStmt(
             "SELECT C_ID " +
-            "  FROM " + SEATSConstants.TABLENAME_CUSTOMER +
+            "  FROM " + SEATSConstantsHistory.TABLENAME_CUSTOMER +
             " WHERE C_ID_STR = ?");
 
     public final SQLStmt GetCustomerByFFNumber = new SQLStmt(
             "SELECT C_ID, FF_AL_ID " +
-            "  FROM " + SEATSConstants.TABLENAME_CUSTOMER + ", " +
-            SEATSConstants.TABLENAME_FREQUENT_FLYER +
+            "  FROM " + SEATSConstantsHistory.TABLENAME_CUSTOMER + ", " +
+            SEATSConstantsHistory.TABLENAME_FREQUENT_FLYER +
             " WHERE FF_C_ID_STR = ? AND FF_C_ID = C_ID");
 
     public final SQLStmt GetCustomerReservation = new SQLStmt(
@@ -51,24 +51,24 @@ public class DeleteReservationHistory extends Procedure {
             "       C_IATTR00, C_IATTR02, C_IATTR04, C_IATTR06, " +
             "       F_SEATS_LEFT, " +
             "       R_ID, R_SEAT, R_PRICE, R_IATTR00 " +
-            "  FROM " + SEATSConstants.TABLENAME_CUSTOMER + ", " +
-            SEATSConstants.TABLENAME_FLIGHT + ", " +
-            SEATSConstants.TABLENAME_RESERVATION +
+            "  FROM " + SEATSConstantsHistory.TABLENAME_CUSTOMER + ", " +
+            SEATSConstantsHistory.TABLENAME_FLIGHT + ", " +
+            SEATSConstantsHistory.TABLENAME_RESERVATION +
             " WHERE C_ID = ? AND C_ID = R_C_ID " +
             "   AND F_ID = ? AND F_ID = R_F_ID "
     );
 
     public final SQLStmt DeleteReservation = new SQLStmt(
-            "DELETE FROM " + SEATSConstants.TABLENAME_RESERVATION +
+            "DELETE FROM " + SEATSConstantsHistory.TABLENAME_RESERVATION +
             " WHERE R_ID = ? AND R_C_ID = ? AND R_F_ID = ?");
 
     public final SQLStmt UpdateFlight = new SQLStmt(
-            "UPDATE " + SEATSConstants.TABLENAME_FLIGHT +
+            "UPDATE " + SEATSConstantsHistory.TABLENAME_FLIGHT +
             "   SET F_SEATS_LEFT = F_SEATS_LEFT + 1 " +
             " WHERE F_ID = ? ");
 
     public final SQLStmt UpdateCustomer = new SQLStmt(
-            "UPDATE " + SEATSConstants.TABLENAME_CUSTOMER +
+            "UPDATE " + SEATSConstantsHistory.TABLENAME_CUSTOMER +
             "   SET C_BALANCE = C_BALANCE + ?, " +
             "       C_IATTR00 = ?, " +
             "       C_IATTR10 = C_IATTR10 - 1, " +
@@ -76,7 +76,7 @@ public class DeleteReservationHistory extends Procedure {
             " WHERE C_ID = ? ");
 
     public final SQLStmt UpdateFrequentFlyer = new SQLStmt(
-            "UPDATE " + SEATSConstants.TABLENAME_FREQUENT_FLYER +
+            "UPDATE " + SEATSConstantsHistory.TABLENAME_FREQUENT_FLYER +
             "   SET FF_IATTR10 = FF_IATTR10 - 1 " +
             " WHERE FF_C_ID = ? " +
             "   AND FF_AL_ID = ?");

@@ -19,8 +19,6 @@ package com.oltpbenchmark.benchmarks.seatsHistories;
 
 import com.oltpbenchmark.benchmarks.seats.util.CustomerId;
 import com.oltpbenchmark.benchmarks.seats.util.FlightId;
-import com.oltpbenchmark.benchmarks.seatsHistories.procedures.Config;
-import com.oltpbenchmark.benchmarks.seatsHistories.procedures.LoadConfigHistory;
 import com.oltpbenchmark.catalog.Column;
 import com.oltpbenchmark.catalog.Table;
 import com.oltpbenchmark.util.*;
@@ -146,7 +144,7 @@ public class SEATSProfile {
         this.airline_data_dir = benchmark.getDataDir();
 
         // Tuple Code to Tuple Id Mapping
-        for (String[] xref : SEATSConstants.CODE_TO_ID_COLUMNS) {
+        for (String[] xref : SEATSConstantsHistory.CODE_TO_ID_COLUMNS) {
 
             String tableName = xref[0];
             String codeCol = xref[1];
@@ -195,7 +193,7 @@ public class SEATSProfile {
     protected final void saveProfile(Connection conn) throws SQLException {
 
         // CONFIG_PROFILE
-        Table profileTable = benchmark.getCatalog().getTable(SEATSConstants.TABLENAME_CONFIG_PROFILE);
+        Table profileTable = benchmark.getCatalog().getTable(SEATSConstantsHistory.TABLENAME_CONFIG_PROFILE);
         String profileSql = SQLUtil.getInsertSQL(profileTable, this.benchmark.getWorkloadConfiguration().getDatabaseType());
 
         try (PreparedStatement stmt = conn.prepareStatement(profileSql)) {
@@ -218,7 +216,7 @@ public class SEATSProfile {
         }
 
         // CONFIG_HISTOGRAMS
-        Table histogramsTable = benchmark.getCatalog().getTable(SEATSConstants.TABLENAME_CONFIG_HISTOGRAMS);
+        Table histogramsTable = benchmark.getCatalog().getTable(SEATSConstantsHistory.TABLENAME_CONFIG_HISTOGRAMS);
         String histogramSql = SQLUtil.getInsertSQL(histogramsTable, this.benchmark.getWorkloadConfiguration().getDatabaseType());
         try (PreparedStatement stmt = conn.prepareStatement(histogramSql)) {
             for (Entry<String, Histogram<String>> e : this.airport_histograms.entrySet()) {
@@ -305,9 +303,9 @@ public class SEATSProfile {
             this.loadConfigHistograms(results.getConfigHistogram());
 
 
-            this.loadCodeXref(results.getCountryCodes(), SEATSConstants.COUNTRY_CODE, SEATSConstants.COUNTRY_ID);
-            this.loadCodeXref(results.getAirportCodes(), SEATSConstants.AIRPORT_CODE, SEATSConstants.AIRPORT_ID);
-            this.loadCodeXref(results.getAirlineCodes(), SEATSConstants.AIRLINE_IATA_CODE, SEATSConstants.AIRLINE_ID);
+            this.loadCodeXref(results.getCountryCodes(), SEATSConstantsHistory.COUNTRY_CODE, SEATSConstantsHistory.COUNTRY_ID);
+            this.loadCodeXref(results.getAirportCodes(), SEATSConstantsHistory.AIRPORT_CODE, SEATSConstantsHistory.AIRPORT_ID);
+            this.loadCodeXref(results.getAirlineCodes(), SEATSConstantsHistory.AIRLINE_IATA_CODE, SEATSConstantsHistory.AIRLINE_ID);
 
             // CACHED FLIGHT IDS
             this.loadCachedFlights(results.getFlights());
@@ -339,7 +337,7 @@ public class SEATSProfile {
             this.num_reservations = SQLUtil.getLong(row[8]);
         }
         if (LOG.isDebugEnabled()) {
-            LOG.debug(String.format("Loaded %s data", SEATSConstants.TABLENAME_CONFIG_PROFILE));
+            LOG.debug(String.format("Loaded %s data", SEATSConstantsHistory.TABLENAME_CONFIG_PROFILE));
         }
     }
 
@@ -362,7 +360,7 @@ public class SEATSProfile {
             }
         }
         if (LOG.isDebugEnabled()) {
-            LOG.debug(String.format("Loaded %s data", SEATSConstants.TABLENAME_CONFIG_HISTOGRAMS));
+            LOG.debug(String.format("Loaded %s data", SEATSConstantsHistory.TABLENAME_CONFIG_HISTOGRAMS));
         }
     }
 
@@ -381,7 +379,7 @@ public class SEATSProfile {
     private void loadCachedFlights(List<Object[]> vt) {
         int limit = 1;
         Iterator<Object[]> iterator = vt.iterator();
-        while (iterator.hasNext() && limit++ < SEATSConstants.CACHE_LIMIT_FLIGHT_IDS) {
+        while (iterator.hasNext() && limit++ < SEATSConstantsHistory.CACHE_LIMIT_FLIGHT_IDS) {
             Object[] row = iterator.next();
             String f_id = SQLUtil.getString(row[0]);
             FlightId flight_id = new FlightId(f_id);
@@ -436,7 +434,7 @@ public class SEATSProfile {
             // If we have room, shove it right in
             // We'll throw it in the back because we know it hasn't been used
             // yet
-            if (this.cached_flight_ids.size() < SEATSConstants.CACHE_LIMIT_FLIGHT_IDS) {
+            if (this.cached_flight_ids.size() < SEATSConstantsHistory.CACHE_LIMIT_FLIGHT_IDS) {
                 this.cached_flight_ids.addLast(flight_id);
                 added = true;
 
@@ -560,7 +558,7 @@ public class SEATSProfile {
     public Timestamp getRandomUpcomingDate() {
         Timestamp upcoming_start_date = this.flight_upcoming_date;
         int offset = this.rng.nextInt((int) this.getFlightFutureDays());
-        return (new Timestamp(upcoming_start_date.getTime() + (offset * SEATSConstants.MILLISECONDS_PER_DAY)));
+        return (new Timestamp(upcoming_start_date.getTime() + (offset * SEATSConstantsHistory.MILLISECONDS_PER_DAY)));
     }
 
     /**
@@ -585,17 +583,17 @@ public class SEATSProfile {
     // ----------------------------------------------------------------
 
     public Collection<Long> getAirlineIds() {
-        Map<String, Long> m = this.getCodeXref(SEATSConstants.AIRLINE_ID);
+        Map<String, Long> m = this.getCodeXref(SEATSConstantsHistory.AIRLINE_ID);
         return (m.values());
     }
 
     public Collection<String> getAirlineCodes() {
-        Map<String, Long> m = this.getCodeXref(SEATSConstants.AIRLINE_ID);
+        Map<String, Long> m = this.getCodeXref(SEATSConstantsHistory.AIRLINE_ID);
         return (m.keySet());
     }
 
     public Long getAirlineId(String airline_code) {
-        Map<String, Long> m = this.getCodeXref(SEATSConstants.AIRLINE_ID);
+        Map<String, Long> m = this.getCodeXref(SEATSConstantsHistory.AIRLINE_ID);
         return (m.get(airline_code));
     }
 
@@ -623,17 +621,17 @@ public class SEATSProfile {
      * @return
      */
     public Collection<Long> getAirportIds() {
-        Map<String, Long> m = this.getCodeXref(SEATSConstants.AIRPORT_ID);
+        Map<String, Long> m = this.getCodeXref(SEATSConstantsHistory.AIRPORT_ID);
         return (m.values());
     }
 
     public Long getAirportId(String airport_code) {
-        Map<String, Long> m = this.getCodeXref(SEATSConstants.AIRPORT_ID);
+        Map<String, Long> m = this.getCodeXref(SEATSConstantsHistory.AIRPORT_ID);
         return (m.get(airport_code));
     }
 
     public String getAirportCode(long airport_id) {
-        Map<String, Long> m = this.getCodeXref(SEATSConstants.AIRPORT_ID);
+        Map<String, Long> m = this.getCodeXref(SEATSConstantsHistory.AIRPORT_ID);
         for (Entry<String, Long> e : m.entrySet()) {
             if (e.getValue() == airport_id) {
                 return (e.getKey());
@@ -643,7 +641,7 @@ public class SEATSProfile {
     }
 
     public Collection<String> getAirportCodes() {
-        return (this.getCodeXref(SEATSConstants.AIRPORT_ID).keySet());
+        return (this.getCodeXref(SEATSConstantsHistory.AIRPORT_ID).keySet());
     }
 
     /**

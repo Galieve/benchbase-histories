@@ -21,7 +21,7 @@ package com.oltpbenchmark.benchmarks.seatsHistories.procedures;
 import com.oltpbenchmark.api.Procedure;
 import com.oltpbenchmark.api.SQLStmt;
 import com.oltpbenchmark.apiHistory.events.Event;
-import com.oltpbenchmark.benchmarks.seatsHistories.SEATSConstants;
+import com.oltpbenchmark.benchmarks.seatsHistories.SEATSConstantsHistory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +35,7 @@ public class FindFlightsHistory extends Procedure {
 
     public final SQLStmt GetNearbyAirports = new SQLStmt(
             "SELECT * " +
-            "  FROM " + SEATSConstants.TABLENAME_AIRPORT_DISTANCE +
+            "  FROM " + SEATSConstantsHistory.TABLENAME_AIRPORT_DISTANCE +
             " WHERE D_AP_ID0 = ? " +
             "   AND D_DISTANCE <= ? " +
             " ORDER BY D_DISTANCE ASC "
@@ -44,8 +44,8 @@ public class FindFlightsHistory extends Procedure {
     public final SQLStmt GetAirportInfo = new SQLStmt(
             "SELECT AP_CODE, AP_NAME, AP_CITY, AP_LONGITUDE, AP_LATITUDE, " +
             " CO_ID, CO_NAME, CO_CODE_2, CO_CODE_3 " +
-            " FROM " + SEATSConstants.TABLENAME_AIRPORT + ", " +
-            SEATSConstants.TABLENAME_COUNTRY +
+            " FROM " + SEATSConstantsHistory.TABLENAME_AIRPORT + ", " +
+            SEATSConstantsHistory.TABLENAME_COUNTRY +
             " WHERE AP_ID = ? AND AP_CO_ID = CO_ID "
     );
 
@@ -53,8 +53,8 @@ public class FindFlightsHistory extends Procedure {
             "SELECT F_ID, F_AL_ID, F_SEATS_LEFT, " +
             " F_DEPART_AP_ID, F_DEPART_TIME, F_ARRIVE_AP_ID, F_ARRIVE_TIME, " +
             " AL_NAME, AL_IATTR00, AL_IATTR01 " +
-            " FROM " + SEATSConstants.TABLENAME_FLIGHT + ", " +
-            SEATSConstants.TABLENAME_AIRLINE +
+            " FROM " + SEATSConstantsHistory.TABLENAME_FLIGHT + ", " +
+            SEATSConstantsHistory.TABLENAME_AIRLINE +
             " WHERE F_DEPART_AP_ID = ? " +
             "   AND F_DEPART_TIME >= ? AND F_DEPART_TIME <= ? " +
             "   AND F_AL_ID = AL_ID " +

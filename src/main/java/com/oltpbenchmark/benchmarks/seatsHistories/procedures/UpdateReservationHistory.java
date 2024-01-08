@@ -44,7 +44,7 @@ import com.oltpbenchmark.api.Procedure;
 import com.oltpbenchmark.api.SQLStmt;
 import com.oltpbenchmark.apiHistory.events.Event;
 import com.oltpbenchmark.benchmarks.seats.util.ErrorType;
-import com.oltpbenchmark.benchmarks.seatsHistories.SEATSConstants;
+import com.oltpbenchmark.benchmarks.seatsHistories.SEATSConstantsHistory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,15 +59,15 @@ public class UpdateReservationHistory extends Procedure {
 
     public final SQLStmt CheckSeat = new SQLStmt(
             "SELECT R_ID " +
-            "  FROM " + SEATSConstants.TABLENAME_RESERVATION +
+            "  FROM " + SEATSConstantsHistory.TABLENAME_RESERVATION +
             " WHERE R_F_ID = ? and R_SEAT = ?");
 
     public final SQLStmt CheckCustomer = new SQLStmt(
             "SELECT R_ID " +
-            "  FROM " + SEATSConstants.TABLENAME_RESERVATION +
+            "  FROM " + SEATSConstantsHistory.TABLENAME_RESERVATION +
             " WHERE R_F_ID = ? AND R_C_ID = ?");
 
-    private static final String BASE_SQL = "UPDATE " + SEATSConstants.TABLENAME_RESERVATION +
+    private static final String BASE_SQL = "UPDATE " + SEATSConstantsHistory.TABLENAME_RESERVATION +
                                            "   SET R_SEAT = ?, %s = ? " +
                                            " WHERE R_ID = ? AND R_C_ID = ? AND R_F_ID = ?";
 

@@ -43,7 +43,7 @@ package com.oltpbenchmark.benchmarks.seatsHistories.procedures;
 import com.oltpbenchmark.api.Procedure;
 import com.oltpbenchmark.api.SQLStmt;
 import com.oltpbenchmark.apiHistory.events.Event;
-import com.oltpbenchmark.benchmarks.seatsHistories.SEATSConstants;
+import com.oltpbenchmark.benchmarks.seatsHistories.SEATSConstantsHistory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,16 +57,16 @@ public class FindOpenSeatsHistory extends Procedure {
     private static final Logger LOG = LoggerFactory.getLogger(FindOpenSeatsHistory.class);
 
     public final SQLStmt GetFlight = new SQLStmt(
-            "SELECT F_STATUS, F_BASE_PRICE, F_SEATS_TOTAL, F_SEATS_LEFT, " +
-            "       (F_BASE_PRICE + (F_BASE_PRICE * (1 - (F_SEATS_LEFT / F_SEATS_TOTAL)))) AS F_PRICE " +
-            "  FROM " + SEATSConstants.TABLENAME_FLIGHT +
-            " WHERE F_ID = ?"
+        "SELECT F_STATUS, F_BASE_PRICE, F_SEATS_TOTAL, F_SEATS_LEFT, " +
+        "       (F_BASE_PRICE + (F_BASE_PRICE * (1 - (F_SEATS_LEFT / F_SEATS_TOTAL)))) AS F_PRICE " +
+        "  FROM " + SEATSConstantsHistory.TABLENAME_FLIGHT +
+        " WHERE F_ID = ?"
     );
 
     public final SQLStmt GetSeats = new SQLStmt(
-            "SELECT R_ID, R_F_ID, R_SEAT " +
-            "  FROM " + SEATSConstants.TABLENAME_RESERVATION +
-            " WHERE R_F_ID = ?"
+        "SELECT R_ID, R_F_ID, R_SEAT " +
+        "  FROM " + SEATSConstantsHistory.TABLENAME_RESERVATION +
+        " WHERE R_F_ID = ?"
     );
 
     public Object[][] run(Connection conn, String f_id, ArrayList<Event> events, int id, int so) throws SQLException {
@@ -137,11 +137,11 @@ public class FindOpenSeatsHistory extends Procedure {
         }
 
         int ctr = 0;
-        Object[][] returnResults = new Object[SEATSConstants.FLIGHTS_NUM_SEATS][];
+        Object[][] returnResults = new Object[SEATSConstantsHistory.FLIGHTS_NUM_SEATS][];
         for (int i = 0; i < seatmap.length; ++i) {
             if (seatmap[i] == -1) {
                 // Charge more for the first seats
-                double price = seat_price * (i < SEATSConstants.FLIGHTS_FIRST_CLASS_OFFSET ? 2.0 : 1.0);
+                double price = seat_price * (i < SEATSConstantsHistory.FLIGHTS_FIRST_CLASS_OFFSET ? 2.0 : 1.0);
                 Object[] row = new Object[]{f_id, i, price};
                 returnResults[ctr++] = row;
                 if (ctr == returnResults.length) {

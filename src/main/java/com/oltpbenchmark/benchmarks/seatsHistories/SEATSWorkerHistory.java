@@ -111,7 +111,7 @@ public class SEATSWorkerHistory extends WorkerHistory<SEATSBenchmarkHistory> {
     // -----------------------------------------------------------------
 
     public enum CacheType {
-        PENDING_INSERTS(SEATSConstants.CACHE_LIMIT_PENDING_INSERTS), PENDING_UPDATES(SEATSConstants.CACHE_LIMIT_PENDING_UPDATES), PENDING_DELETES(SEATSConstants.CACHE_LIMIT_PENDING_DELETES),
+        PENDING_INSERTS(SEATSConstantsHistory.CACHE_LIMIT_PENDING_INSERTS), PENDING_UPDATES(SEATSConstantsHistory.CACHE_LIMIT_PENDING_UPDATES), PENDING_DELETES(SEATSConstantsHistory.CACHE_LIMIT_PENDING_DELETES),
         ;
 
         CacheType(int limit) {
@@ -133,10 +133,10 @@ public class SEATSWorkerHistory extends WorkerHistory<SEATSBenchmarkHistory> {
     protected final Map<CustomerId, Set<FlightId>> CACHE_CUSTOMER_BOOKED_FLIGHTS = new HashMap<>();
     protected final Map<FlightId, BitSet> CACHE_BOOKED_SEATS = new HashMap<>();
 
-    private static final BitSet FULL_FLIGHT_BITSET = new BitSet(SEATSConstants.FLIGHTS_NUM_SEATS);
+    private static final BitSet FULL_FLIGHT_BITSET = new BitSet(SEATSConstantsHistory.FLIGHTS_NUM_SEATS);
 
     static {
-        for (int i = 0; i < SEATSConstants.FLIGHTS_NUM_SEATS; i++) {
+        for (int i = 0; i < SEATSConstantsHistory.FLIGHTS_NUM_SEATS; i++) {
             FULL_FLIGHT_BITSET.set(i);
         }
     }
@@ -147,7 +147,7 @@ public class SEATSWorkerHistory extends WorkerHistory<SEATSBenchmarkHistory> {
 //            synchronized (CACHE_BOOKED_SEATS) {
             seats = CACHE_BOOKED_SEATS.get(flight_id);
             if (seats == null) {
-                seats = new BitSet(SEATSConstants.FLIGHTS_NUM_SEATS);
+                seats = new BitSet(SEATSConstantsHistory.FLIGHTS_NUM_SEATS);
                 CACHE_BOOKED_SEATS.put(flight_id, seats);
             }
 //            }
@@ -397,11 +397,11 @@ public class SEATSWorkerHistory extends WorkerHistory<SEATSBenchmarkHistory> {
         Long ff_al_id = null;
 
         // Delete with the Customer's id as a string
-        if (rand <= SEATSConstants.PROB_DELETE_WITH_CUSTOMER_ID_STR) {
+        if (rand <= SEATSConstantsHistory.PROB_DELETE_WITH_CUSTOMER_ID_STR) {
             c_id_str = r.customer_id.encode();
         }
         // Delete using their FrequentFlyer information
-        else if (rand <= SEATSConstants.PROB_DELETE_WITH_CUSTOMER_ID_STR + SEATSConstants.PROB_DELETE_WITH_FREQUENTFLYER_ID_STR) {
+        else if (rand <= SEATSConstantsHistory.PROB_DELETE_WITH_CUSTOMER_ID_STR + SEATSConstantsHistory.PROB_DELETE_WITH_FREQUENTFLYER_ID_STR) {
             ff_c_id_str = r.customer_id.encode();
             ff_al_id = r.flight_id.getAirlineId();
         }
@@ -422,7 +422,7 @@ public class SEATSWorkerHistory extends WorkerHistory<SEATSBenchmarkHistory> {
         seats.set(r.seatnum, false);
 
         // And then put it up for a pending insert
-        if (rng.nextInt(100) < SEATSConstants.PROB_REQUEUE_DELETED_RESERVATION) {
+        if (rng.nextInt(100) < SEATSConstantsHistory.PROB_REQUEUE_DELETED_RESERVATION) {
             CACHE_RESERVATIONS.get(CacheType.PENDING_INSERTS).add(r);
         }
 
@@ -447,14 +447,14 @@ public class SEATSWorkerHistory extends WorkerHistory<SEATSBenchmarkHistory> {
         Timestamp stop_date;
 
         // Select two random airport ids
-        if (rng.nextInt(100) < SEATSConstants.PROB_FIND_FLIGHTS_RANDOM_AIRPORTS) {
+        if (rng.nextInt(100) < SEATSConstantsHistory.PROB_FIND_FLIGHTS_RANDOM_AIRPORTS) {
             // Does it matter whether the one airport actually flies to the other one?
             depart_airport_id = this.profile.getRandomAirportId();
             arrive_airport_id = this.profile.getRandomOtherAirport(depart_airport_id);
 
             // Select a random date from our upcoming dates
             start_date = this.profile.getRandomUpcomingDate();
-            stop_date = new Timestamp(start_date.getTime() + (SEATSConstants.MILLISECONDS_PER_DAY * 2));
+            stop_date = new Timestamp(start_date.getTime() + (SEATSConstantsHistory.MILLISECONDS_PER_DAY * 2));
         }
 
         // Use an existing flight so that we guaranteed to get back results
@@ -464,7 +464,7 @@ public class SEATSWorkerHistory extends WorkerHistory<SEATSBenchmarkHistory> {
             arrive_airport_id = flight_id.getArriveAirportId();
 
             Timestamp flightDate = flight_id.getDepartDateAsTimestamp(this.profile.getFlightStartDate());
-            long range = Math.round(SEATSConstants.MILLISECONDS_PER_DAY * 0.5);
+            long range = Math.round(SEATSConstantsHistory.MILLISECONDS_PER_DAY * 0.5);
             start_date = new Timestamp(flightDate.getTime() - range);
             stop_date = new Timestamp(flightDate.getTime() + range);
 
@@ -475,8 +475,8 @@ public class SEATSWorkerHistory extends WorkerHistory<SEATSBenchmarkHistory> {
 
         // If distance is greater than zero, then we will also get flights from nearby airports
         long distance = -1;
-        if (rng.nextInt(100) < SEATSConstants.PROB_FIND_FLIGHTS_NEARBY_AIRPORT) {
-            distance = SEATSConstants.DISTANCES[rng.nextInt(SEATSConstants.DISTANCES.length)];
+        if (rng.nextInt(100) < SEATSConstantsHistory.PROB_FIND_FLIGHTS_NEARBY_AIRPORT) {
+            distance = SEATSConstantsHistory.DISTANCES[rng.nextInt(SEATSConstantsHistory.DISTANCES.length)];
         }
 
         if (LOG.isTraceEnabled()) {
@@ -549,7 +549,7 @@ public class SEATSWorkerHistory extends WorkerHistory<SEATSBenchmarkHistory> {
             // We will go for a random one if:
             //  (1) The Customer is already booked on this Flight
             //  (2) We already made a new Reservation just now for this Customer
-            int tries = SEATSConstants.FLIGHTS_NUM_SEATS;
+            int tries = SEATSConstantsHistory.FLIGHTS_NUM_SEATS;
             while (tries-- > 0 && (customer_id == null)) { //  || isCustomerBookedOnFlight(customer_id, flight_id))) {
                 customer_id = profile.getRandomCustomerId();
                 if (LOG.isTraceEnabled()) {
@@ -567,7 +567,7 @@ public class SEATSWorkerHistory extends WorkerHistory<SEATSBenchmarkHistory> {
         if (!tmp_reservations.isEmpty()) {
             Collections.shuffle(tmp_reservations);
             cache.addAll(tmp_reservations);
-            while (cache.size() > SEATSConstants.CACHE_LIMIT_PENDING_INSERTS) {
+            while (cache.size() > SEATSConstantsHistory.CACHE_LIMIT_PENDING_INSERTS) {
                 cache.remove();
             }
             if (LOG.isDebugEnabled()) {
@@ -625,7 +625,7 @@ public class SEATSWorkerHistory extends WorkerHistory<SEATSBenchmarkHistory> {
         }
 
         // Generate a random price for now
-        double price = 2.0 * rng.number(SEATSConstants.RESERVATION_PRICE_MIN, SEATSConstants.RESERVATION_PRICE_MAX);
+        double price = 2.0 * rng.number(SEATSConstantsHistory.RESERVATION_PRICE_MIN, SEATSConstantsHistory.RESERVATION_PRICE_MAX);
 
         // Generate random attributes
         long[] attributes = new long[9];
@@ -660,10 +660,10 @@ public class SEATSWorkerHistory extends WorkerHistory<SEATSBenchmarkHistory> {
         String c_id_str = null;
         long attr0 = this.rng.nextLong();
         long attr1 = this.rng.nextLong();
-        long update_ff = (rng.number(1, 100) <= SEATSConstants.PROB_UPDATE_FREQUENT_FLYER ? 1 : 0);
+        long update_ff = (rng.number(1, 100) <= SEATSConstantsHistory.PROB_UPDATE_FREQUENT_FLYER ? 1 : 0);
 
         // Update with the Customer's id as a string
-        if (rng.nextInt(100) < SEATSConstants.PROB_UPDATE_WITH_CUSTOMER_ID_STR) {
+        if (rng.nextInt(100) < SEATSConstantsHistory.PROB_UPDATE_WITH_CUSTOMER_ID_STR) {
             c_id_str = customer_id.encode();
         }
         // Update using their Customer id
@@ -711,7 +711,7 @@ public class SEATSWorkerHistory extends WorkerHistory<SEATSBenchmarkHistory> {
 
         long value = rng.number(1, 1 << 20);
         long attribute_idx = rng.nextInt(UpdateReservationHistory.NUM_UPDATES);
-        long seatnum = rng.number(0, SEATSConstants.FLIGHTS_NUM_SEATS - 1);
+        long seatnum = rng.number(0, SEATSConstantsHistory.FLIGHTS_NUM_SEATS - 1);
 
         if (LOG.isTraceEnabled()) {
             LOG.trace("Calling {}", proc);

@@ -156,7 +156,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
         threads.add(new LoaderThread(this.benchmark) {
             @Override
             public void load(Connection conn) {
-                loadFixedTable(conn, SEATSConstants.TABLENAME_COUNTRY);
+                loadFixedTable(conn, SEATSConstantsHistory.TABLENAME_COUNTRY);
             }
 
             @Override
@@ -179,7 +179,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
         threads.add(new LoaderThread(this.benchmark) {
             @Override
             public void load(Connection conn) {
-                loadFixedTable(conn, SEATSConstants.TABLENAME_AIRPORT);
+                loadFixedTable(conn, SEATSConstantsHistory.TABLENAME_AIRPORT);
             }
 
             @Override
@@ -201,7 +201,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
         threads.add(new LoaderThread(this.benchmark) {
             @Override
             public void load(Connection conn) {
-                loadFixedTable(conn, SEATSConstants.TABLENAME_AIRLINE);
+                loadFixedTable(conn, SEATSConstantsHistory.TABLENAME_AIRLINE);
             }
 
             @Override
@@ -255,7 +255,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
             @Override
             public void load(Connection conn) {
 
-                loadScalingTable(conn, SEATSConstants.TABLENAME_CUSTOMER);
+                loadScalingTable(conn, SEATSConstantsHistory.TABLENAME_CUSTOMER);
 
             }
 
@@ -281,7 +281,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
             public void load(Connection conn) {
 
 
-                loadScalingTable(conn, SEATSConstants.TABLENAME_AIRPORT_DISTANCE);
+                loadScalingTable(conn, SEATSConstantsHistory.TABLENAME_AIRPORT_DISTANCE);
 
             }
 
@@ -306,7 +306,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
             public void load(Connection conn) {
 
 
-                loadScalingTable(conn, SEATSConstants.TABLENAME_FLIGHT);
+                loadScalingTable(conn, SEATSConstantsHistory.TABLENAME_FLIGHT);
 
             }
 
@@ -333,7 +333,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
             public void load(Connection conn) {
 
 
-                loadScalingTable(conn, SEATSConstants.TABLENAME_RESERVATION);
+                loadScalingTable(conn, SEATSConstantsHistory.TABLENAME_RESERVATION);
 
             }
 
@@ -358,7 +358,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
             @Override
             public void load(Connection conn) {
 
-                loadScalingTable(conn, SEATSConstants.TABLENAME_FREQUENT_FLYER);
+                loadScalingTable(conn, SEATSConstantsHistory.TABLENAME_FREQUENT_FLYER);
 
             }
 
@@ -405,12 +405,12 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
      */
     protected void loadHistograms() {
         if (LOG.isDebugEnabled()) {
-            LOG.debug(String.format("Loading in %d histograms from files stored in '%s'", SEATSConstants.HISTOGRAM_DATA_FILES.length, this.profile.airline_data_dir));
+            LOG.debug(String.format("Loading in %d histograms from files stored in '%s'", SEATSConstantsHistory.HISTOGRAM_DATA_FILES.length, this.profile.airline_data_dir));
         }
 
         // Now load in the histograms that we will need for generating the
         // flight data
-        for (String histogramName : SEATSConstants.HISTOGRAM_DATA_FILES) {
+        for (String histogramName : SEATSConstantsHistory.HISTOGRAM_DATA_FILES) {
             if (this.profile.histograms.containsKey(histogramName)) {
                 LOG.warn("Already loaded histogram '{}'. Skipping...", histogramName);
                 continue;
@@ -424,7 +424,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
                 // The Flights_Per_Airport histogram is actually a serialized
                 // map that has a histogram
                 // of the departing flights from each airport to all the others
-                if (histogramName.equals(SEATSConstants.HISTOGRAM_FLIGHTS_PER_AIRPORT)) {
+                if (histogramName.equals(SEATSConstantsHistory.HISTOGRAM_FLIGHTS_PER_AIRPORT)) {
                     Map<String, Histogram<String>> m = SEATSHistogramUtil.loadAirportFlights(this.profile.airline_data_dir);
 
                     if (LOG.isDebugEnabled()) {
@@ -503,7 +503,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
      */
     public void loadTable(Connection conn, Table catalog_tbl, Iterable<Object[]> iterable, int batch_size) {
         // Special Case: Airport Locations
-        final boolean is_airport = catalog_tbl.getName().equalsIgnoreCase(SEATSConstants.TABLENAME_AIRPORT);
+        final boolean is_airport = catalog_tbl.getName().equalsIgnoreCase(SEATSConstantsHistory.TABLENAME_AIRPORT);
 
         if (LOG.isDebugEnabled()) {
             LOG.debug(String.format("Generating new records for table %s [batchSize=%d]", catalog_tbl.getName().toLowerCase(), batch_size));
@@ -645,7 +645,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
 
         // Record the number of tuples that we loaded for this table in the
         // profile
-        if (catalog_tbl.getName().equalsIgnoreCase(SEATSConstants.TABLENAME_RESERVATION)) {
+        if (catalog_tbl.getName().equalsIgnoreCase(SEATSConstantsHistory.TABLENAME_RESERVATION)) {
             this.profile.num_reservations = row_idx + 1;
         }
 
@@ -731,29 +731,29 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
         String name = catalog_tbl.getName().toLowerCase();
         ScalingDataIterable it = null;
         double scaleFactor = this.workConf.getScaleFactor();
-        long num_customers = Math.round(SEATSConstants.CUSTOMERS_COUNT * scaleFactor);
+        long num_customers = Math.round(SEATSConstantsHistory.CUSTOMERS_COUNT * scaleFactor);
 
         // Customers
-        if (name.equalsIgnoreCase(SEATSConstants.TABLENAME_CUSTOMER)) {
+        if (name.equalsIgnoreCase(SEATSConstantsHistory.TABLENAME_CUSTOMER)) {
             it = new CustomerIterable(catalog_tbl, num_customers);
         }
         // FrequentFlyer
-        else if (name.equalsIgnoreCase(SEATSConstants.TABLENAME_FREQUENT_FLYER)) {
+        else if (name.equalsIgnoreCase(SEATSConstantsHistory.TABLENAME_FREQUENT_FLYER)) {
             it = new FrequentFlyerIterable(catalog_tbl, num_customers);
         }
         // Airport Distance
-        else if (name.equalsIgnoreCase(SEATSConstants.TABLENAME_AIRPORT_DISTANCE)) {
-            int max_distance = Integer.MAX_VALUE; // SEATSConstants.DISTANCES[SEATSConstants.DISTANCES.length
+        else if (name.equalsIgnoreCase(SEATSConstantsHistory.TABLENAME_AIRPORT_DISTANCE)) {
+            int max_distance = Integer.MAX_VALUE; // SEATSConstantsHistory.DISTANCES[SEATSConstantsHistory.DISTANCES.length
             // - 1];
             it = new AirportDistanceIterable(catalog_tbl, max_distance);
         }
         // Flights
-        else if (name.equalsIgnoreCase(SEATSConstants.TABLENAME_FLIGHT)) {
-            it = new FlightIterable(catalog_tbl, (int) Math.round(SEATSConstants.FLIGHTS_DAYS_PAST * scaleFactor), (int) Math.round(SEATSConstants.FLIGHTS_DAYS_FUTURE * scaleFactor));
+        else if (name.equalsIgnoreCase(SEATSConstantsHistory.TABLENAME_FLIGHT)) {
+            it = new FlightIterable(catalog_tbl, (int) Math.round(SEATSConstantsHistory.FLIGHTS_DAYS_PAST * scaleFactor), (int) Math.round(SEATSConstantsHistory.FLIGHTS_DAYS_FUTURE * scaleFactor));
         }
         // Reservations
-        else if (name.equalsIgnoreCase(SEATSConstants.TABLENAME_RESERVATION)) {
-            long total = Math.round((SEATSConstants.FLIGHTS_PER_DAY_MIN + SEATSConstants.FLIGHTS_PER_DAY_MAX) / 2d * scaleFactor);
+        else if (name.equalsIgnoreCase(SEATSConstantsHistory.TABLENAME_RESERVATION)) {
+            long total = Math.round((SEATSConstantsHistory.FLIGHTS_PER_DAY_MIN + SEATSConstantsHistory.FLIGHTS_PER_DAY_MAX) / 2d * scaleFactor);
             it = new ReservationIterable(catalog_tbl, total);
         }
 
@@ -892,7 +892,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
 
             // Use the flights per airport histogram to select where people are
             // located
-            Histogram<String> histogram = SEATSLoaderHistory.this.profile.getHistogram(SEATSConstants.HISTOGRAM_FLIGHTS_PER_AIRPORT);
+            Histogram<String> histogram = SEATSLoaderHistory.this.profile.getHistogram(SEATSConstantsHistory.HISTOGRAM_FLIGHTS_PER_AIRPORT);
             this.rand = new FlatHistogram<>(SEATSLoaderHistory.this.rng, histogram);
             if (LOG.isDebugEnabled()) {
                 this.rand.enableHistory();
@@ -996,8 +996,8 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
             // Loop through for the total customers and figure out how many
             // entries we
             // should have for each one. This will be our new total;
-            long max_per_customer = Math.min(Math.round(SEATSConstants.CUSTOMER_NUM_FREQUENTFLYERS_MAX * Math.max(1, SEATSLoaderHistory.this.scaleFactor)), SEATSLoaderHistory.this.flights_per_airline.getValueCount());
-            Zipf ff_zipf = new Zipf(SEATSLoaderHistory.this.rng, SEATSConstants.CUSTOMER_NUM_FREQUENTFLYERS_MIN, max_per_customer, SEATSConstants.CUSTOMER_NUM_FREQUENTFLYERS_SIGMA);
+            long max_per_customer = Math.min(Math.round(SEATSConstantsHistory.CUSTOMER_NUM_FREQUENTFLYERS_MAX * Math.max(1, SEATSLoaderHistory.this.scaleFactor)), SEATSLoaderHistory.this.flights_per_airline.getValueCount());
+            Zipf ff_zipf = new Zipf(SEATSLoaderHistory.this.rng, SEATSConstantsHistory.CUSTOMER_NUM_FREQUENTFLYERS_MIN, max_per_customer, SEATSConstantsHistory.CUSTOMER_NUM_FREQUENTFLYERS_SIGMA);
             long new_total = 0;
             long total = SEATSLoaderHistory.this.profile.getCustomerIdCount();
             if (LOG.isDebugEnabled()) {
@@ -1198,7 +1198,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
             super(catalog_tbl, Long.MAX_VALUE, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
 
 
-            this.prices = new Flat(SEATSLoaderHistory.this.rng, SEATSConstants.RESERVATION_PRICE_MIN, SEATSConstants.RESERVATION_PRICE_MAX);
+            this.prices = new Flat(SEATSLoaderHistory.this.rng, SEATSConstantsHistory.RESERVATION_PRICE_MIN, SEATSConstantsHistory.RESERVATION_PRICE_MAX);
 
             // Flights per Airline
             Collection<String> all_airlines = SEATSLoaderHistory.this.profile.getAirlineCodes();
@@ -1210,7 +1210,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
             this.airlines = new FlatHistogram<>(gauss_rng, histogram);
 
             // Flights Per Airport
-            histogram = SEATSLoaderHistory.this.profile.getHistogram(SEATSConstants.HISTOGRAM_FLIGHTS_PER_AIRPORT);
+            histogram = SEATSLoaderHistory.this.profile.getHistogram(SEATSConstantsHistory.HISTOGRAM_FLIGHTS_PER_AIRPORT);
             this.airports = new FlatHistogram<>(SEATSLoaderHistory.this.rng, histogram);
             for (String airport_code : histogram.values()) {
                 histogram = SEATSLoaderHistory.this.profile.getFightsPerAirportHistogram(airport_code);
@@ -1219,7 +1219,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
             }
 
             // Flights Per Departure Time
-            histogram = SEATSLoaderHistory.this.profile.getHistogram(SEATSConstants.HISTOGRAM_FLIGHTS_PER_DEPART_TIMES);
+            histogram = SEATSLoaderHistory.this.profile.getHistogram(SEATSConstantsHistory.HISTOGRAM_FLIGHTS_PER_DEPART_TIMES);
             this.flight_times = new FlatHistogram<>(SEATSLoaderHistory.this.rng, histogram);
 
             // Figure out how many flights that we want for each day
@@ -1227,11 +1227,11 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
 
             // Sometimes there are more flights per day, and sometimes there are
             // fewer
-            Gaussian gaussian = new Gaussian(SEATSLoaderHistory.this.rng, SEATSConstants.FLIGHTS_PER_DAY_MIN, SEATSConstants.FLIGHTS_PER_DAY_MAX);
+            Gaussian gaussian = new Gaussian(SEATSLoaderHistory.this.rng, SEATSConstantsHistory.FLIGHTS_PER_DAY_MIN, SEATSConstantsHistory.FLIGHTS_PER_DAY_MAX);
 
             this.total = 0;
             boolean first = true;
-            for (long t = this.today.getTime() - (days_past * SEATSConstants.MILLISECONDS_PER_DAY); t < this.today.getTime(); t += SEATSConstants.MILLISECONDS_PER_DAY) {
+            for (long t = this.today.getTime() - (days_past * SEATSConstantsHistory.MILLISECONDS_PER_DAY); t < this.today.getTime(); t += SEATSConstantsHistory.MILLISECONDS_PER_DAY) {
                 Timestamp timestamp = new Timestamp(t);
                 if (first) {
                     this.start_date = timestamp;
@@ -1249,7 +1249,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
             // This is for upcoming flights that we want to be able to schedule
             // new reservations for in the benchmark
             SEATSLoaderHistory.this.profile.setFlightUpcomingDate(this.today);
-            for (long t = this.today.getTime(), last_date = this.today.getTime() + (days_future * SEATSConstants.MILLISECONDS_PER_DAY); t <= last_date; t += SEATSConstants.MILLISECONDS_PER_DAY) {
+            for (long t = this.today.getTime(), last_date = this.today.getTime() + (days_future * SEATSConstantsHistory.MILLISECONDS_PER_DAY); t <= last_date; t += SEATSConstantsHistory.MILLISECONDS_PER_DAY) {
                 Timestamp timestamp = new Timestamp(t);
                 int num_flights = gaussian.nextInt();
                 this.flights_per_day.put(timestamp, num_flights);
@@ -1268,7 +1268,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
          * @return
          */
         private Timestamp convertTimeString(Timestamp base_date, String code) {
-            Matcher m = SEATSConstants.TIMECODE_PATTERN.matcher(code);
+            Matcher m = SEATSConstantsHistory.TIMECODE_PATTERN.matcher(code);
             boolean result = m.find();
 
 
@@ -1288,7 +1288,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
             }
 
 
-            long offset = (hour * 60 * SEATSConstants.MILLISECONDS_PER_MINUTE) + (minute * SEATSConstants.MILLISECONDS_PER_MINUTE);
+            long offset = (hour * 60 * SEATSConstantsHistory.MILLISECONDS_PER_MINUTE) + (minute * SEATSConstantsHistory.MILLISECONDS_PER_MINUTE);
             return (new Timestamp(base_date.getTime() + offset));
         }
 
@@ -1321,7 +1321,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
          * reservation)
          */
         boolean seatIsOccupied() {
-            return (SEATSLoaderHistory.this.rng.nextInt(100) < SEATSConstants.PROB_SEAT_OCCUPIED);
+            return (SEATSLoaderHistory.this.rng.nextInt(100) < SEATSConstantsHistory.PROB_SEAT_OCCUPIED);
         }
 
         @Override
@@ -1406,14 +1406,14 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
                 }
                 // SEATS TOTAL
                 case (8): {
-                    value = SEATSConstants.FLIGHTS_NUM_SEATS;
+                    value = SEATSConstantsHistory.FLIGHTS_NUM_SEATS;
                     break;
                 }
                 // SEATS REMAINING
                 case (9): {
                     // We have to figure this out ahead of time since we need to
                     // populate the tuple now
-                    for (int seatnum = 0; seatnum < SEATSConstants.FLIGHTS_NUM_SEATS; seatnum++) {
+                    for (int seatnum = 0; seatnum < SEATSConstantsHistory.FLIGHTS_NUM_SEATS; seatnum++) {
                         if (!this.seatIsOccupied()) {
                             continue;
                         }
@@ -1437,7 +1437,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
     // RESERVATIONS
     // ----------------------------------------------------------------
     protected class ReservationIterable extends ScalingDataIterable {
-        private final Flat prices = new Flat(SEATSLoaderHistory.this.rng, SEATSConstants.RESERVATION_PRICE_MIN, SEATSConstants.RESERVATION_PRICE_MAX);
+        private final Flat prices = new Flat(SEATSLoaderHistory.this.rng, SEATSConstantsHistory.RESERVATION_PRICE_MIN, SEATSConstantsHistory.RESERVATION_PRICE_MAX);
 
         /**
          * For each airport id, store a list of ReturnFlight objects that
@@ -1456,7 +1456,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
          * will stay at their destination before needing to return to their
          * original airport
          */
-        private final Gaussian rand_returns = new Gaussian(SEATSLoaderHistory.this.rng, SEATSConstants.CUSTOMER_RETURN_FLIGHT_DAYS_MIN, SEATSConstants.CUSTOMER_RETURN_FLIGHT_DAYS_MAX);
+        private final Gaussian rand_returns = new Gaussian(SEATSLoaderHistory.this.rng, SEATSConstantsHistory.CUSTOMER_RETURN_FLIGHT_DAYS_MIN, SEATSConstantsHistory.CUSTOMER_RETURN_FLIGHT_DAYS_MAX);
 
         private final LinkedBlockingDeque<Object[]> queue = new LinkedBlockingDeque<>(100);
         private Object[] current = null;
@@ -1524,7 +1524,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
 
                 // For each flight figure out which customers are returning
                 this.getReturningCustomers(returning_customers, flight_id);
-                int booked_seats = SEATSConstants.FLIGHTS_NUM_SEATS - SEATSLoaderHistory.this.getFlightRemainingSeats(flight_id);
+                int booked_seats = SEATSConstantsHistory.FLIGHTS_NUM_SEATS - SEATSLoaderHistory.this.getFlightRemainingSeats(flight_id);
 
                 if (LOG.isTraceEnabled()) {
                     Map<String, Object> m = new ListOrderedMap<>();
@@ -1578,7 +1578,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
                         // If it's a new outbound flight, then we will randomly
                         // decide when this customer will return (if at all)
                     } else {
-                        if (SEATSLoaderHistory.this.rng.nextInt(100) < SEATSConstants.PROB_SINGLE_FLIGHT_RESERVATION) {
+                        if (SEATSLoaderHistory.this.rng.nextInt(100) < SEATSConstantsHistory.PROB_SINGLE_FLIGHT_RESERVATION) {
                             // Do nothing for now...
 
                             // Create a ReturnFlight object to record that this
@@ -1732,7 +1732,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
 
 
         this.profile.addFlightId(flight_id);
-        this.seats_remaining.put(flight_id, (short) SEATSConstants.FLIGHTS_NUM_SEATS);
+        this.seats_remaining.put(flight_id, (short) SEATSConstantsHistory.FLIGHTS_NUM_SEATS);
 
         // XXX
         if (this.profile.flight_upcoming_offset == null && this.profile.flight_upcoming_date.compareTo(flight_id.getDepartDateAsTimestamp(this.profile.flight_start_date)) < 0) {
@@ -1813,7 +1813,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
     public Timestamp calculateArrivalTime(String depart_airport, String arrive_airport, Timestamp depart_time) {
         Integer distance = this.getDistance(depart_airport, arrive_airport);
 
-        long flight_time = Math.round(distance / SEATSConstants.FLIGHT_TRAVEL_RATE) * 3600000000L;
+        long flight_time = Math.round(distance / SEATSConstantsHistory.FLIGHT_TRAVEL_RATE) * 3600000000L;
         // 60 sec * 60 min * 1,000,000
         return (new Timestamp(depart_time.getTime() + flight_time));
     }

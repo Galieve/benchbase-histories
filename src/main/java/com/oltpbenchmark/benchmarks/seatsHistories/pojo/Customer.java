@@ -19,10 +19,9 @@
 package com.oltpbenchmark.benchmarks.seatsHistories.pojo;
 
 import com.oltpbenchmark.apiHistory.PojoHistory;
-import com.oltpbenchmark.benchmarks.twitterHistories.TwitterConstantsHistory;
+import com.oltpbenchmark.benchmarks.seatsHistories.SEATSConstantsHistory;
 import com.oltpbenchmark.util.Pair;
 
-import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -46,7 +45,6 @@ public class Customer implements PojoHistory {
     public String c_sattr05;
     public String c_sattr06;
     public String c_sattr07;
-
     public String c_sattr08;
     public String c_sattr09;
     public String c_sattr10;
@@ -59,6 +57,27 @@ public class Customer implements PojoHistory {
     public String c_sattr17;
     public String c_sattr18;
     public String c_sattr19;
+
+    public long c_iattr00;
+    public long c_iattr01;
+    public long c_iattr02;
+    public long c_iattr03;
+    public long c_iattr04;
+    public long c_iattr05;
+    public long c_iattr06;
+    public long c_iattr07;
+    public long c_iattr08;
+    public long c_iattr09;
+    public long c_iattr10;
+    public long c_iattr11;
+    public long c_iattr12;
+    public long c_iattr13;
+    public long c_iattr14;
+    public long c_iattr15;
+    public long c_iattr16;
+    public long c_iattr17;
+    public long c_iattr18;
+    public long c_iattr19;
 
     public String writeID;
 
@@ -76,8 +95,48 @@ public class Customer implements PojoHistory {
         return List.of(
             new Pair<>("STRING", "C_ID"),
             new Pair<>("STRING", "C_ID_STR"),
-            new Pair<>("STRING", "TEXT"),
-            new Pair<>("TIMESTAMP", "CREATEDATE"),
+            new Pair<>("LONG", "C_BASE_AP_ID"),
+            new Pair<>("FLOAT", "C_BALANCE"),
+            new Pair<>("STRING", "C_SATTR00"),
+            new Pair<>("STRING", "C_SATTR01"),
+            new Pair<>("STRING", "C_SATTR02"),
+            new Pair<>("STRING", "C_SATTR03"),
+            new Pair<>("STRING", "C_SATTR04"),
+            new Pair<>("STRING", "C_SATTR05"),
+            new Pair<>("STRING", "C_SATTR06"),
+            new Pair<>("STRING", "C_SATTR07"),
+            new Pair<>("STRING", "C_SATTR08"),
+            new Pair<>("STRING", "C_SATTR09"),
+            new Pair<>("STRING", "C_SATTR10"),
+            new Pair<>("STRING", "C_SATTR11"),
+            new Pair<>("STRING", "C_SATTR12"),
+            new Pair<>("STRING", "C_SATTR13"),
+            new Pair<>("STRING", "C_SATTR14"),
+            new Pair<>("STRING", "C_SATTR15"),
+            new Pair<>("STRING", "C_SATTR16"),
+            new Pair<>("STRING", "C_SATTR17"),
+            new Pair<>("STRING", "C_SATTR18"),
+            new Pair<>("STRING", "C_SATTR19"),
+            new Pair<>("LONG", "C_IATTR00"),
+            new Pair<>("LONG", "C_IATTR01"),
+            new Pair<>("LONG", "C_IATTR02"),
+            new Pair<>("LONG", "C_IATTR03"),
+            new Pair<>("LONG", "C_IATTR04"),
+            new Pair<>("LONG", "C_IATTR05"),
+            new Pair<>("LONG", "C_IATTR06"),
+            new Pair<>("LONG", "C_IATTR07"),
+            new Pair<>("LONG", "C_IATTR08"),
+            new Pair<>("LONG", "C_IATTR09"),
+            new Pair<>("LONG", "C_IATTR10"),
+            new Pair<>("LONG", "C_IATTR11"),
+            new Pair<>("LONG", "C_IATTR12"),
+            new Pair<>("LONG", "C_IATTR13"),
+            new Pair<>("LONG", "C_IATTR14"),
+            new Pair<>("LONG", "C_IATTR15"),
+            new Pair<>("LONG", "C_IATTR16"),
+            new Pair<>("LONG", "C_IATTR17"),
+            new Pair<>("LONG", "C_IATTR18"),
+            new Pair<>("LONG", "C_IATTR19"),
             new Pair<>("STRING", "WRITEID")
         );
     }
@@ -85,7 +144,7 @@ public class Customer implements PojoHistory {
     @Override
     public Set<String> getTableNames() {
         if(table == null){
-            table = new HashSet<>(Collections.singleton(TwitterConstantsHistory.TABLENAME_TWEETS));
+            table = new HashSet<>(Collections.singleton(SEATSConstantsHistory.TABLENAME_CUSTOMER));
         }
         return table;
     }

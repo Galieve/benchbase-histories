@@ -98,7 +98,7 @@ public class NewOrderNDHistory extends TPCCProcedureNDHistory {
         SELECT *
           FROM %s
          WHERE S_I_ID = ?
-           AND S_W_ID = ? FOR UPDATE
+           AND S_W_ID = ?
     """.formatted(TPCCConstantsHistory.TABLENAME_STOCK));
 
     public final SQLStmt stmtUpdateStockSQL = new SQLStmt(

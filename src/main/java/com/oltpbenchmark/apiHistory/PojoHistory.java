@@ -21,6 +21,7 @@ public interface PojoHistory {
     private String getValue(String type, String field, ResultSet rs, int update) throws SQLException {
         return switch (type) {
             case "INT" -> String.valueOf(rs.getInt(field));
+            case "LONG" -> String.valueOf(rs.getLong(field));
             case "STRING" -> field.equals("WRITEID") ? getWriteID(rs, update) : rs.getString(field) == null ? null : rs.getString(field);
             case "FLOAT" -> rs.getBigDecimal(field) == null ? null : rs.getBigDecimal(field).toString();
             case "TIMESTAMP" -> rs.getTimestamp(field) == null ? null :rs.getTimestamp(field).toString();

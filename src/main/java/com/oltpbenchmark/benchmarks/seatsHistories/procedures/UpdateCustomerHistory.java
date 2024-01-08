@@ -22,7 +22,7 @@ import com.oltpbenchmark.api.Procedure;
 import com.oltpbenchmark.api.SQLStmt;
 import com.oltpbenchmark.apiHistory.events.Event;
 import com.oltpbenchmark.benchmarks.seats.util.ErrorType;
-import com.oltpbenchmark.benchmarks.seatsHistories.SEATSConstants;
+import com.oltpbenchmark.benchmarks.seatsHistories.SEATSConstantsHistory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,37 +37,37 @@ public class UpdateCustomerHistory extends Procedure {
 
     public final SQLStmt GetCustomerIdStr = new SQLStmt(
             "SELECT C_ID " +
-            "  FROM " + SEATSConstants.TABLENAME_CUSTOMER +
+            "  FROM " + SEATSConstantsHistory.TABLENAME_CUSTOMER +
             " WHERE C_ID_STR = ? "
     );
 
     public final SQLStmt GetCustomer = new SQLStmt(
             "SELECT * " +
-            "  FROM " + SEATSConstants.TABLENAME_CUSTOMER +
+            "  FROM " + SEATSConstantsHistory.TABLENAME_CUSTOMER +
             " WHERE C_ID = ? "
     );
 
     public final SQLStmt GetBaseAirport = new SQLStmt(
             "SELECT * " +
-            "  FROM " + SEATSConstants.TABLENAME_AIRPORT + ", " +
-            SEATSConstants.TABLENAME_COUNTRY +
+            "  FROM " + SEATSConstantsHistory.TABLENAME_AIRPORT + ", " +
+            SEATSConstantsHistory.TABLENAME_COUNTRY +
             " WHERE AP_ID = ? AND AP_CO_ID = CO_ID "
     );
 
     public final SQLStmt UpdateCustomer = new SQLStmt(
-            "UPDATE " + SEATSConstants.TABLENAME_CUSTOMER +
+            "UPDATE " + SEATSConstantsHistory.TABLENAME_CUSTOMER +
             "   SET C_IATTR00 = ?, " +
             "       C_IATTR01 = ? " +
             " WHERE C_ID = ?"
     );
 
     public final SQLStmt GetFrequentFlyers = new SQLStmt(
-            "SELECT * FROM " + SEATSConstants.TABLENAME_FREQUENT_FLYER +
+            "SELECT * FROM " + SEATSConstantsHistory.TABLENAME_FREQUENT_FLYER +
             " WHERE FF_C_ID = ?"
     );
 
     public final SQLStmt UpdatFrequentFlyers = new SQLStmt(
-            "UPDATE " + SEATSConstants.TABLENAME_FREQUENT_FLYER +
+            "UPDATE " + SEATSConstantsHistory.TABLENAME_FREQUENT_FLYER +
             "   SET FF_IATTR00 = ?, " +
             "       FF_IATTR01 = ? " +
             " WHERE FF_C_ID = ? " +

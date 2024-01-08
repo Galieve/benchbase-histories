@@ -23,7 +23,7 @@ import com.oltpbenchmark.api.SQLStmt;
 import com.oltpbenchmark.apiHistory.events.Event;
 import com.oltpbenchmark.benchmarks.seats.util.CustomerId;
 import com.oltpbenchmark.benchmarks.seats.util.ErrorType;
-import com.oltpbenchmark.benchmarks.seatsHistories.SEATSConstants;
+import com.oltpbenchmark.benchmarks.seatsHistories.SEATSConstantsHistory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,33 +38,33 @@ public class NewReservationHistory extends Procedure {
 
     public final SQLStmt GetFlight = new SQLStmt(
             "SELECT F_AL_ID, F_SEATS_LEFT, " +
-            SEATSConstants.TABLENAME_AIRLINE + ".* " +
-            "  FROM " + SEATSConstants.TABLENAME_FLIGHT + ", " +
-            SEATSConstants.TABLENAME_AIRLINE +
+            SEATSConstantsHistory.TABLENAME_AIRLINE + ".* " +
+            "  FROM " + SEATSConstantsHistory.TABLENAME_FLIGHT + ", " +
+            SEATSConstantsHistory.TABLENAME_AIRLINE +
             " WHERE F_ID = ? AND F_AL_ID = AL_ID");
 
     public final SQLStmt GetCustomer = new SQLStmt(
             "SELECT C_BASE_AP_ID, C_BALANCE, C_SATTR00 " +
-            "  FROM " + SEATSConstants.TABLENAME_CUSTOMER +
+            "  FROM " + SEATSConstantsHistory.TABLENAME_CUSTOMER +
             " WHERE C_ID = ? ");
 
     public final SQLStmt CheckSeat = new SQLStmt(
             "SELECT R_ID " +
-            "  FROM " + SEATSConstants.TABLENAME_RESERVATION +
+            "  FROM " + SEATSConstantsHistory.TABLENAME_RESERVATION +
             " WHERE R_F_ID = ? and R_SEAT = ?");
 
     public final SQLStmt CheckCustomer = new SQLStmt(
             "SELECT R_ID " +
-            "  FROM " + SEATSConstants.TABLENAME_RESERVATION +
+            "  FROM " + SEATSConstantsHistory.TABLENAME_RESERVATION +
             " WHERE R_F_ID = ? AND R_C_ID = ?");
 
     public final SQLStmt UpdateFlight = new SQLStmt(
-            "UPDATE " + SEATSConstants.TABLENAME_FLIGHT +
+            "UPDATE " + SEATSConstantsHistory.TABLENAME_FLIGHT +
             "   SET F_SEATS_LEFT = F_SEATS_LEFT - 1 " +
             " WHERE F_ID = ? ");
 
     public final SQLStmt UpdateCustomer = new SQLStmt(
-            "UPDATE " + SEATSConstants.TABLENAME_CUSTOMER +
+            "UPDATE " + SEATSConstantsHistory.TABLENAME_CUSTOMER +
             "   SET C_IATTR10 = C_IATTR10 + 1, " +
             "       C_IATTR11 = C_IATTR11 + 1, " +
             "       C_IATTR12 = ?, " +
@@ -74,7 +74,7 @@ public class NewReservationHistory extends Procedure {
             " WHERE C_ID = ? ");
 
     public final SQLStmt UpdateFrequentFlyer = new SQLStmt(
-            "UPDATE " + SEATSConstants.TABLENAME_FREQUENT_FLYER +
+            "UPDATE " + SEATSConstantsHistory.TABLENAME_FREQUENT_FLYER +
             "   SET FF_IATTR10 = FF_IATTR10 + 1, " +
             "       FF_IATTR11 = ?, " +
             "       FF_IATTR12 = ?, " +
@@ -84,7 +84,7 @@ public class NewReservationHistory extends Procedure {
             "   AND FF_AL_ID = ?");
 
     public final SQLStmt InsertReservation = new SQLStmt(
-            "INSERT INTO " + SEATSConstants.TABLENAME_RESERVATION + " (" +
+            "INSERT INTO " + SEATSConstantsHistory.TABLENAME_RESERVATION + " (" +
             "   R_ID, " +
             "   R_C_ID, " +
             "   R_F_ID, " +
