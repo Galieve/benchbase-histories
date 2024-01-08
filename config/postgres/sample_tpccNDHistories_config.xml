@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<parameters>
+
+    <!-- Connection details -->
+    <type>POSTGRES</type>
+    <driver>org.postgresql.Driver</driver>
+    <url>jdbc:postgresql://localhost:5432/benchbase?sslmode=disable&amp;ApplicationName=tpccNDHistories&amp;reWriteBatchedInserts=true</url>
+    <username>admin</username>
+    <password>password</password>
+    <isolation>TRANSACTION_SERIALIZABLE</isolation>
+    <!-- <isolation>TRANSACTION_READ_COMMITTED</isolation> -->
+    <batchsize>128</batchsize>
+
+    <!-- Scale factor is the number of warehouses in TPCC -->
+    <scalefactor>1</scalefactor>
+
+    <!-- The workload -->
+    <terminals>3</terminals>
+    <works>
+        <work>
+            <time>3</time>
+            <rate>100</rate>
+            <weights>45,43,4,4,4</weights>
+            <!-- <weights>30,0,0,70,0</weights> -->
+        </work>
+    </works>
+
+<!-- TPCC specific -->
+    <transactiontypes>
+        <transactiontype>
+            <name>NewOrderNDHistory</name>
+            <isolation>TRANSACTION_SERIALIZABLE</isolation>
+            <!--<preExecutionWait>18000</preExecutionWait>-->
+            <!--<postExecutionWait>12000</postExecutionWait>-->
+        </transactiontype>
+        <transactiontype>
+            <name>PaymentNDHistory</name>
+            <!--<preExecutionWait>3000</preExecutionWait>-->
+            <!--<postExecutionWait>12000</postExecutionWait>-->
+        </transactiontype>
+        <transactiontype>
+            <name>OrderStatusNDHistory</name>
+            <!--<preExecutionWait>2000</preExecutionWait>-->
+            <!--<postExecutionWait>10000</postExecutionWait>-->
+        </transactiontype>
+        <transactiontype>
+            <name>DeliveryNDHistory</name>
+            <!--<preExecutionWait>2000</preExecutionWait>-->
+            <!--<postExecutionWait>5000</postExecutionWait>-->
+        </transactiontype>
+        <transactiontype>
+            <name>StockLevelNDHistory</name>
+            <!--<preExecutionWait>2000</preExecutionWait>-->
+            <!--<postExecutionWait>5000</postExecutionWait>-->
+        </transactiontype>
+    </transactiontypes>
+</parameters>
