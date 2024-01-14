@@ -43,7 +43,10 @@ package com.oltpbenchmark.benchmarks.seatsHistories.procedures;
 import com.oltpbenchmark.api.Procedure;
 import com.oltpbenchmark.api.SQLStmt;
 import com.oltpbenchmark.apiHistory.events.Event;
+import com.oltpbenchmark.apiHistory.events.SelectEvent;
+import com.oltpbenchmark.apiHistory.events.Value;
 import com.oltpbenchmark.benchmarks.seatsHistories.SEATSConstantsHistory;
+import com.oltpbenchmark.benchmarks.seatsHistories.pojo.Reservation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,24 +55,26 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.function.Function;
 
 public class FindOpenSeatsHistory extends Procedure {
     private static final Logger LOG = LoggerFactory.getLogger(FindOpenSeatsHistory.class);
 
     public final SQLStmt GetFlight = new SQLStmt(
-        "SELECT F_STATUS, F_BASE_PRICE, F_SEATS_TOTAL, F_SEATS_LEFT, " +
-        "       (F_BASE_PRICE + (F_BASE_PRICE * (1 - (F_SEATS_LEFT / F_SEATS_TOTAL)))) AS F_PRICE " +
+        "SELECT * " +
         "  FROM " + SEATSConstantsHistory.TABLENAME_FLIGHT +
         " WHERE F_ID = ?"
     );
 
     public final SQLStmt GetSeats = new SQLStmt(
-        "SELECT R_ID, R_F_ID, R_SEAT " +
+        "SELECT * " +
         "  FROM " + SEATSConstantsHistory.TABLENAME_RESERVATION +
         " WHERE R_F_ID = ?"
     );
 
     public Object[][] run(Connection conn, String f_id, ArrayList<Event> events, int id, int so) throws SQLException {
+
+        int po = 0;
 
         // 150 seats
         final long[] seatmap = new long[]
@@ -98,16 +103,17 @@ public class FindOpenSeatsHistory extends Procedure {
                 if (f_results.next()) {
 
                     // long status = results[0].getLong(0);
-                    base_price = f_results.getDouble(2);
-                    seats_total = f_results.getLong(3);
-                    seats_left = f_results.getLong(4);
-                    seat_price = f_results.getDouble(5);
+                    base_price = f_results.getDouble("F_BASE_PRICE");
+                    seats_total = f_results.getLong("F_SEATS_TOTAL");
+                    seats_left = f_results.getLong("F_SEATS_LEFT");
+                    seat_price = base_price + (base_price * (1.0- seats_left /(double) seats_total));
                 } else {
                     LOG.warn("flight {} had no seats; this may be a data problem or a code problem.  previously this threw an unhandled exception.", f_id);
                 }
             }
         }
 
+        ++po;
         // TODO: Figure out why this doesn't match the SQL
         //   Possible explanation: Floating point numbers are approximations;
         //                         there is no exact representation of (for example) 0.01.
@@ -125,16 +131,25 @@ public class FindOpenSeatsHistory extends Procedure {
             s_stmt.setString(1, f_id);
             try (ResultSet s_results = s_stmt.executeQuery()) {
                 while (s_results.next()) {
-                    long r_id = s_results.getLong(1);
-                    int seatnum = s_results.getInt(3);
+                    long r_id = s_results.getLong("R_ID");
+                    int seatnum = s_results.getInt("R_SEAT");
 
                     LOG.debug(String.format("Reserved Seat: fid %s / rid %d / seat %d", f_id, r_id, seatnum));
 
-
                     seatmap[seatnum] = 1;
                 }
+
+                Function<Value, Boolean> where = (val) ->
+                    val != null &&
+                    val.getValue("R_F_ID").equals(f_id);
+                var r = new Reservation();
+                var wro = r.getSelectEventInfo(s_results);
+                events.add(new SelectEvent(id, so, po, wro, where, r.getTableNames()));
+
+
             }
         }
+        ++po;
 
         int ctr = 0;
         Object[][] returnResults = new Object[SEATSConstantsHistory.FLIGHTS_NUM_SEATS][];

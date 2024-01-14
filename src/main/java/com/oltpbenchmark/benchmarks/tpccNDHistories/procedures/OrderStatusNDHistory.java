@@ -180,15 +180,7 @@ public class OrderStatusNDHistory extends TPCCProcedureNDHistory {
 
             try (ResultSet rs = ordStatGetNewestOrd.executeQuery()) {
 
-                if (!rs.next()) {
-                    String msg = String.format("No order records for CUSTOMER [C_W_ID=%d, C_D_ID=%d, C_ID=%d]", w_id, d_id, c.c_id);
-
-                    throw new RuntimeException(msg);
-                }
                 OpenOrderHistory o = new OpenOrderHistory();
-                o.o_id=rs.getInt("O_ID");
-                o.o_carrier_id = rs.getInt("O_CARRIER_ID");
-                o.o_entry_d = rs.getTimestamp("O_ENTRY_D");
 
                 var p = o.getSelectEventInfo(rs);
                 Function<Value, Boolean> where = (val) ->
@@ -197,6 +189,16 @@ public class OrderStatusNDHistory extends TPCCProcedureNDHistory {
                     String.valueOf(d_id).equals(val.getValue("O_D_ID")) &&
                     String.valueOf(c.c_id).equals(val.getValue("O_C_ID"));
                 events.add(new SelectEvent(id, so, po, p, where, o.getTableNames()));
+
+                rs.beforeFirst();
+                if (!rs.next()) {
+                    String msg = String.format("No order records for CUSTOMER [C_W_ID=%d, C_D_ID=%d, C_ID=%d]", w_id, d_id, c.c_id);
+
+                    throw new RuntimeException(msg);
+                }
+                o.o_id=rs.getInt("O_ID");
+                o.o_carrier_id = rs.getInt("O_CARRIER_ID");
+                o.o_entry_d = rs.getTimestamp("O_ENTRY_D");
                 return o;
             }
         }
@@ -263,16 +265,8 @@ public class OrderStatusNDHistory extends TPCCProcedureNDHistory {
             payGetCust.setInt(3, c_id);
 
             try (ResultSet rs = payGetCust.executeQuery()) {
-                if (!rs.next()) {
-                    String msg = String.format("Failed to get CUSTOMER [C_W_ID=%d, C_D_ID=%d, C_ID=%d]", c_w_id, c_d_id, c_id);
 
-                    throw new RuntimeException(msg);
-                }
-
-                CustomerHistory c = TPCCUtilHistory.newCustomerFromResults(rs);
-                c.c_id = c_id;
-                c.c_last = rs.getString("C_LAST");
-
+                var c = new CustomerHistory();
 
                 var p = c.getSelectEventInfo(rs);
                 Function<Value, Boolean> where = (val) ->
@@ -281,6 +275,16 @@ public class OrderStatusNDHistory extends TPCCProcedureNDHistory {
                     String.valueOf(c_d_id).equals(val.getValue("C_D_ID")) &&
                     String.valueOf(c_id).equals(val.getValue("C_ID"));
                 events.add(new SelectEvent(id, so, po, p, where, c.getTableNames()));
+
+                rs.beforeFirst();
+                if (!rs.next()) {
+                    String msg = String.format("Failed to get CUSTOMER [C_W_ID=%d, C_D_ID=%d, C_ID=%d]", c_w_id, c_d_id, c_id);
+
+                    throw new RuntimeException(msg);
+                }
+                c = TPCCUtilHistory.newCustomerFromResults(rs);
+                c.c_id = c_id;
+                c.c_last = rs.getString("C_LAST");
                 return c;
             }
         }

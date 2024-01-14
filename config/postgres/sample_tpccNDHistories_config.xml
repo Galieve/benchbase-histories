@@ -29,7 +29,6 @@
     <transactiontypes>
         <transactiontype>
             <name>NewOrderNDHistory</name>
-            <isolation>TRANSACTION_SERIALIZABLE</isolation>
             <!--<preExecutionWait>18000</preExecutionWait>-->
             <!--<postExecutionWait>12000</postExecutionWait>-->
         </transactiontype>

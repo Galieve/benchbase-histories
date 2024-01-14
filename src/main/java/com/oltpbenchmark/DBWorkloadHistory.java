@@ -497,6 +497,12 @@ public class DBWorkloadHistory extends DBWorkload{
                     FileUtil.writeStringToFile(new File(fileName), histogram_json);
                     LOG.info("Histograms JSON Data: " + fileName);
                 }
+                /*
+                if(r.getRetry().getSampleCount() == 0 && r.getError().getSampleCount() == 0 && r.getRetryDifferent().getSampleCount() == 0 && r.getUnknown().getSampleCount() == 0) {
+
+                }
+                */
+
                 var results = evaluateHistory(transactions);
                 writeOutputHistory(results, argsLine);
 
@@ -574,6 +580,7 @@ public class DBWorkloadHistory extends DBWorkload{
         };
         Future<Object> future = executor.submit(task);
         try {
+            //Object result = future.get(Integer.MAX_VALUE, TimeUnit.MINUTES);
             Object result = future.get(1, TimeUnit.MINUTES);
         } catch (TimeoutException ex) {
             r.setTimeout(true);

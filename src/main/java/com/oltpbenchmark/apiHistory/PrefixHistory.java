@@ -99,7 +99,7 @@ public class PrefixHistory {
                         var w = history.getWro().get(variable).get(r);
                         if(w == null) continue;
                         if(transactions.get(w.getId()).size() <= w.getSo()) continue;
-                        if(!t3.satisfyConstraint(history,coLarge,t,r,variable)) return false;
+                        if(t3.satisfyConstraint(history,coLarge,t,r,variable)) return false;
                     }
                 }
             }

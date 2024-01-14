@@ -24,6 +24,7 @@ import com.oltpbenchmark.benchmarks.tpccHistories.TPCCConstantsHistory;
 import com.oltpbenchmark.benchmarks.tpccHistories.TPCCUtilHistory;
 import com.oltpbenchmark.benchmarks.tpccHistories.TPCCWorkerHistory;
 import com.oltpbenchmark.benchmarks.tpccHistories.pojo.*;
+import com.oltpbenchmark.utilHistory.SQLUtilHistory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -237,6 +238,7 @@ public class NewOrderHistory extends TPCCProcedureHistory {
 
 
                 rs = stmtUpdateStock.getResultSet();
+                /*
                 Function<Value, Value> set = (val)->{
                     val.setValue("S_QUANTITY", String.valueOf(s.s_quantity));
                     val.setValue("S_YTD", String.valueOf(Float.parseFloat(val.getValue("S_YTD")) + ol_quantity));
@@ -245,7 +247,8 @@ public class NewOrderHistory extends TPCCProcedureHistory {
                     val.setValue("WRITEID", evID);
                     return val;
                 };
-                var infoUpdate = s.getUpdateEventInfo(set, rs);
+                */
+                var infoUpdate = s.getUpdateEventInfo(rs);
                 Function<Value, Boolean> where = (val) ->
                     val != null &&
                     String.valueOf(ol_supply_w_id).equals(val.getValue("S_W_ID")) &&
@@ -278,10 +281,21 @@ public class NewOrderHistory extends TPCCProcedureHistory {
             stmtGetStock.setInt(1, ol_i_id);
             stmtGetStock.setInt(2, ol_supply_w_id);
             try (ResultSet rs = stmtGetStock.executeQuery()) {
+
+                StockHistory s = new StockHistory();
+
+                var p = s.getSelectEventInfo(rs);
+                Function<Value, Boolean> where = (val) ->
+                    val != null &&
+                    String.valueOf(ol_i_id).equals(val.getValue("S_I_ID")) &&
+                    String.valueOf(ol_supply_w_id).equals(val.getValue("S_W_ID"));
+                events.add(new SelectEvent(id, so, po, p, where, s.getTableNames()));
+
+                rs.beforeFirst();
                 if (!rs.next()) {
                     throw new RuntimeException("S_I_ID=" + ol_i_id + " not found!");
                 }
-                StockHistory s = new StockHistory();
+
                 s.s_quantity = rs.getInt("S_QUANTITY");
                 s.s_dist_01 = rs.getString("S_DIST_01");
                 s.s_dist_02 = rs.getString("S_DIST_02");
@@ -300,13 +314,6 @@ public class NewOrderHistory extends TPCCProcedureHistory {
                     s.s_quantity += -ol_quantity + 91;
                 }
 
-                var p = s.getSelectEventInfo(rs);
-                Function<Value, Boolean> where = (val) ->
-                    val != null &&
-                    String.valueOf(ol_i_id).equals(val.getValue("S_I_ID")) &&
-                    String.valueOf(ol_supply_w_id).equals(val.getValue("S_W_ID"));
-                events.add(new SelectEvent(id, so, po, p, where, s.getTableNames()));
-
                 return s;
             }
         }
@@ -317,22 +324,21 @@ public class NewOrderHistory extends TPCCProcedureHistory {
             stmtGetItem.setInt(1, ol_i_id);
             try (ResultSet rs = stmtGetItem.executeQuery()) {
 
-                Float ret = null;
-                if(rs.next()){
-                    ret = rs.getFloat("I_PRICE");
-                }
                 var i = new ItemHistory();
                 var p = i.getSelectEventInfo(rs);
                 Function<Value, Boolean> where = (val) ->
                 val != null &&
                     String.valueOf(ol_i_id).equals(val.getValue("I_ID"));
                 events.add(new SelectEvent(id, so, po, p, where, i.getTableNames()));
-                if (ret == null) {
+
+
+                rs.beforeFirst();
+                if (!rs.next()) {
                     // This is (hopefully) an expected error: this is an expected new order rollback
                     throw new UserAbortException("EXPECTED new order rollback: I_ID=" + ol_i_id + " not found!");
 
                 }
-                return ret;
+                return rs.getFloat("I_PRICE");
             }
         }
     }
@@ -347,15 +353,19 @@ public class NewOrderHistory extends TPCCProcedureHistory {
             stmtInsertNewOrder.setInt(3, w_id);
             stmtInsertNewOrder.setString(4, evID);
             stmtInsertNewOrder.execute();
-            int result = stmtInsertNewOrder.getUpdateCount();
+
+            var rs = stmtInsertNewOrder.getResultSet();
+
+
+            var no = new com.oltpbenchmark.benchmarks.tpccHistories.pojo.NewOrderHistory();
+            var p = no.getInsertEventInfo(rs);
+            events.add(new InsertEvent(id, so, po, p, no.getTableNames()));
+
+            int result = SQLUtilHistory.size(rs);
 
             if (result == 0) {
                 LOG.warn("new order not inserted");
             }
-            var rs = stmtInsertNewOrder.getResultSet();
-            var no = new com.oltpbenchmark.benchmarks.tpccHistories.pojo.NewOrderHistory();
-            var p = no.getInsertEventInfo(rs);
-            events.add(new InsertEvent(id, so, po, p, no.getTableNames()));
         }
     }
 
@@ -374,15 +384,18 @@ public class NewOrderHistory extends TPCCProcedureHistory {
             stmtInsertOOrder.setString(8, evID);
 
             stmtInsertOOrder.execute();
-            int result = stmtInsertOOrder.getUpdateCount();
+            var rs = stmtInsertOOrder.getResultSet();
+
+
+            var oo = new OpenOrderHistory();
+            var p = oo.getInsertEventInfo(rs);
+            events.add(new InsertEvent(id, so, po, p, oo.getTableNames()));
+
+            int result = SQLUtilHistory.size(rs);
 
             if (result == 0) {
                 LOG.warn("open order not inserted");
             }
-            var rs = stmtInsertOOrder.getResultSet();
-            var oo = new OpenOrderHistory();
-            var p = oo.getInsertEventInfo(rs);
-            events.add(new InsertEvent(id, so, po, p, oo.getTableNames()));
         }
     }
 
@@ -395,25 +408,22 @@ public class NewOrderHistory extends TPCCProcedureHistory {
             stmtUpdateDist.setInt(3, d_id);
 
             stmtUpdateDist.execute();
-            int result = stmtUpdateDist.getUpdateCount();
 
-            if (result == 0) {
-                throw new RuntimeException("Error!! Cannot update next_order_id on district for D_ID=" + d_id + " D_W_ID=" + w_id);
-            }
             var rs = stmtUpdateDist.getResultSet();
-            Function<Value, Value> set = (val)->{
-                val.setValue("D_NEXT_O_ID",
-                    String.valueOf(Integer.parseInt(val.getValue("D_NEXT_O_ID")) + 1));
-                val.setValue("WRITEID", evID);
-                return val;
-            };
+
             var d = new DistrictHistory();
-            var p = d.getUpdateEventInfo(set, rs);
+            var p = d.getUpdateEventInfo(rs);
             Function<Value, Boolean> where = (val) ->
                 val != null &&
                 String.valueOf(w_id).equals(val.getValue("D_W_ID")) &&
                 String.valueOf(d_id).equals(val.getValue("D_ID"));
             events.add(new UpdateEvent(id, so, po, p.first, p.second, where, d.getTableNames()));
+
+            int result = SQLUtilHistory.size(rs);
+
+            if (result == 0) {
+                throw new RuntimeException("Error!! Cannot update next_order_id on district for D_ID=" + d_id + " D_W_ID=" + w_id);
+            }
         }
     }
 
@@ -423,10 +433,7 @@ public class NewOrderHistory extends TPCCProcedureHistory {
             stmtGetDist.setInt(2, d_id);
             try (ResultSet rs = stmtGetDist.executeQuery()) {
 
-                if (!rs.next()) {
-                    throw new RuntimeException("D_ID=" + d_id + " D_W_ID=" + w_id + " not found!");
-                }
-                var ret = rs.getInt("D_NEXT_O_ID");
+
                 var d = new DistrictHistory();
                 var p = d.getSelectEventInfo(rs);
                 Function<Value, Boolean> where = (val) ->
@@ -434,7 +441,12 @@ public class NewOrderHistory extends TPCCProcedureHistory {
                     String.valueOf(w_id).equals(val.getValue("D_W_ID")) &&
                     String.valueOf(d_id).equals(val.getValue("D_ID"));
                 events.add(new SelectEvent(id, so, po, p, where, d.getTableNames()));
-                return ret;
+
+                rs.beforeFirst();
+                if (!rs.next()) {
+                    throw new RuntimeException("D_ID=" + d_id + " D_W_ID=" + w_id + " not found!");
+                }
+                return rs.getInt("D_NEXT_O_ID");
             }
         }
     }
@@ -443,15 +455,18 @@ public class NewOrderHistory extends TPCCProcedureHistory {
         try (PreparedStatement stmtGetWhse = this.getPreparedStatement(conn, stmtGetWhseSQL)) {
             stmtGetWhse.setInt(1, w_id);
             try (ResultSet rs = stmtGetWhse.executeQuery()) {
-                if (!rs.next()) {
-                    throw new RuntimeException("W_ID=" + w_id + " not found!");
-                }
+
                 var w = new WarehouseHistory();
                 var p = w.getSelectEventInfo(rs);
                 Function<Value, Boolean> where = (val) ->
                 val != null &&
                     String.valueOf(w_id).equals(val.getValue("W_ID"));
                 events.add(new SelectEvent(id, so, po, p, where, w.getTableNames()));
+
+                rs.beforeFirst();
+                if (!rs.next()) {
+                    throw new RuntimeException("W_ID=" + w_id + " not found!");
+                }
             }
         }
     }
@@ -462,9 +477,7 @@ public class NewOrderHistory extends TPCCProcedureHistory {
             stmtGetCust.setInt(2, d_id);
             stmtGetCust.setInt(3, c_id);
             try (ResultSet rs = stmtGetCust.executeQuery()) {
-                if (!rs.next()) {
-                    throw new RuntimeException("C_D_ID=" + d_id + " C_ID=" + c_id + " not found!");
-                }
+
                 var c = new CustomerHistory();
                 var p = c.getSelectEventInfo(rs);
                 Function<Value, Boolean> where = (val) ->
@@ -473,6 +486,11 @@ public class NewOrderHistory extends TPCCProcedureHistory {
                     String.valueOf(d_id).equals(val.getValue("C_D_ID")) &&
                     String.valueOf(c_id).equals(val.getValue("C_ID"));
                 events.add(new SelectEvent(id, so, po, p, where, c.getTableNames()));
+
+                rs.beforeFirst();
+                if (!rs.next()) {
+                    throw new RuntimeException("C_D_ID=" + d_id + " C_ID=" + c_id + " not found!");
+                }
             }
         }
     }

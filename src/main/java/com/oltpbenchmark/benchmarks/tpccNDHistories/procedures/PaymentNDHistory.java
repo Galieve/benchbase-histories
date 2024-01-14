@@ -27,6 +27,7 @@ import com.oltpbenchmark.benchmarks.tpccHistories.pojo.DistrictHistory;
 import com.oltpbenchmark.benchmarks.tpccHistories.pojo.HistoryHistory;
 import com.oltpbenchmark.benchmarks.tpccHistories.TPCCUtilHistory;
 import com.oltpbenchmark.benchmarks.tpccHistories.pojo.WarehouseHistory;
+import com.oltpbenchmark.utilHistory.SQLUtilHistory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -304,16 +305,14 @@ public class PaymentNDHistory extends TPCCProcedureNDHistory {
             // MySQL reports deadlocks due to lock upgrades:
             // t1: read w_id = x; t2: update w_id = x; t1 update w_id = x
             payUpdateWhse.execute();
-            int result = payUpdateWhse.getUpdateCount();
 
             var rs = payUpdateWhse.getResultSet();
-            Function<Value, Value> set = (val)->{
-                val.setValue("W_YTD", String.valueOf(Float.parseFloat(val.getValue("W_YTD")) + paymentAmount));
-                val.setValue("WRITEID", evID);
-                return val;
-            };
+
+            int result = SQLUtilHistory.size(rs);
+
+
             var w = new WarehouseHistory();
-            var p = w.getUpdateEventInfo(set, rs);
+            var p = w.getUpdateEventInfo(rs);
             Function<Value, Boolean> where = (val) ->
                 val != null &&
                 String.valueOf(w_id).equals(val.getValue("W_ID"));
@@ -331,23 +330,25 @@ public class PaymentNDHistory extends TPCCProcedureNDHistory {
 
             try (ResultSet rs = payGetWhse.executeQuery()) {
 
-                if (!rs.next()) {
-                    throw new RuntimeException("W_ID=" + w_id + " not found!");
-                }
-
                 WarehouseHistory w = new WarehouseHistory();
-                w.w_street_1 = rs.getString("W_STREET_1");
-                w.w_street_2 = rs.getString("W_STREET_2");
-                w.w_city = rs.getString("W_CITY");
-                w.w_state = rs.getString("W_STATE");
-                w.w_zip = rs.getString("W_ZIP");
-                w.w_name = rs.getString("W_NAME");
 
                 var p = w.getSelectEventInfo(rs);
                 Function<Value, Boolean> where = (val) ->
                 val != null &&
                     String.valueOf(w_id).equals(val.getValue("W_ID"));
                 events.add(new SelectEvent(id, so, po, p, where, w.getTableNames()));
+
+                rs.beforeFirst();
+                if (!rs.next()) {
+                    throw new RuntimeException("W_ID=" + w_id + " not found!");
+                }
+
+                w.w_street_1 = rs.getString("W_STREET_1");
+                w.w_street_2 = rs.getString("W_STREET_2");
+                w.w_city = rs.getString("W_CITY");
+                w.w_state = rs.getString("W_STATE");
+                w.w_zip = rs.getString("W_ZIP");
+                w.w_name = rs.getString("W_NAME");
 
                 return w;
             }
@@ -386,25 +387,21 @@ public class PaymentNDHistory extends TPCCProcedureNDHistory {
             payUpdateDist.setInt(4, districtID);
 
             payUpdateDist.execute();
-            int result = payUpdateDist.getUpdateCount();
-
-            if (result == 0) {
-                throw new RuntimeException("D_ID=" + districtID + " D_W_ID=" + w_id + " not found!");
-            }
 
             var rs = payUpdateDist.getResultSet();
-            Function<Value, Value> set = (val)->{
-                val.setValue("D_YTD", String.valueOf(Float.parseFloat(val.getValue("D_YTD")) + paymentAmount));
-                val.setValue("WRITEID", evID);
-                return val;
-            };
+            int result = SQLUtilHistory.size(rs);
+
             var d = new DistrictHistory();
-            var p = d.getUpdateEventInfo(set, rs);
+            var p = d.getUpdateEventInfo(rs);
             Function<Value, Boolean> where = (val) ->
                 val != null &&
                 String.valueOf(w_id).equals(val.getValue("D_W_ID")) &&
                 String.valueOf(districtID).equals(val.getValue("D_ID"));
             events.add(new UpdateEvent(id, so, po, p.first, p.second, where, d.getTableNames()));
+
+            if (result == 0) {
+                throw new RuntimeException("D_ID=" + districtID + " D_W_ID=" + w_id + " not found!");
+            }
         }
     }
 
@@ -415,17 +412,7 @@ public class PaymentNDHistory extends TPCCProcedureNDHistory {
 
             try (ResultSet rs = payGetDist.executeQuery()) {
 
-                if (!rs.next()) {
-                    throw new RuntimeException("D_ID=" + districtID + " D_W_ID=" + w_id + " not found!");
-                }
-
                 DistrictHistory d = new DistrictHistory();
-                d.d_street_1 = rs.getString("D_STREET_1");
-                d.d_street_2 = rs.getString("D_STREET_2");
-                d.d_city = rs.getString("D_CITY");
-                d.d_state = rs.getString("D_STATE");
-                d.d_zip = rs.getString("D_ZIP");
-                d.d_name = rs.getString("D_NAME");
 
                 var p = d.getSelectEventInfo(rs);
                 Function<Value, Boolean> where = (val) ->
@@ -433,6 +420,18 @@ public class PaymentNDHistory extends TPCCProcedureNDHistory {
                     String.valueOf(w_id).equals(val.getValue("D_W_ID")) &&
                     String.valueOf(districtID).equals(val.getValue("D_ID"));
                 events.add(new SelectEvent(id, so, po, p, where, d.getTableNames()));
+
+                rs.beforeFirst();
+                if (!rs.next()) {
+                    throw new RuntimeException("D_ID=" + districtID + " D_W_ID=" + w_id + " not found!");
+                }
+
+                d.d_street_1 = rs.getString("D_STREET_1");
+                d.d_street_2 = rs.getString("D_STREET_2");
+                d.d_city = rs.getString("D_CITY");
+                d.d_state = rs.getString("D_STATE");
+                d.d_zip = rs.getString("D_ZIP");
+                d.d_name = rs.getString("D_NAME");
 
                 return d;
             }
@@ -448,11 +447,6 @@ public class PaymentNDHistory extends TPCCProcedureNDHistory {
             payGetCustCdata.setInt(3, c.c_id);
             try (ResultSet rs = payGetCustCdata.executeQuery()) {
 
-                if (!rs.next()) {
-                    throw new RuntimeException("C_ID=" + c.c_id + " C_W_ID=" + customerWarehouseID + " C_D_ID=" + customerDistrictID + " not found!");
-                }
-                c_data = rs.getString("C_DATA");
-
                 var p = c.getSelectEventInfo(rs);
                 Function<Value, Boolean> where = (val) ->
                 val != null &&
@@ -460,6 +454,12 @@ public class PaymentNDHistory extends TPCCProcedureNDHistory {
                     String.valueOf(customerDistrictID).equals(val.getValue("C_D_ID")) &&
                     String.valueOf(c.c_id).equals(val.getValue("C_ID"));
                 events.add(new SelectEvent(id, so, po, p, where, c.getTableNames()));
+
+                rs.beforeFirst();
+                if (!rs.next()) {
+                    throw new RuntimeException("C_ID=" + c.c_id + " C_W_ID=" + customerWarehouseID + " C_D_ID=" + customerDistrictID + " not found!");
+                }
+                c_data = rs.getString("C_DATA");
             }
 
             c_data = c.c_id + " " + customerDistrictID + " " + customerWarehouseID + " " + districtID + " " + w_id + " " + paymentAmount + " | " + c_data;
@@ -489,27 +489,20 @@ public class PaymentNDHistory extends TPCCProcedureNDHistory {
             payUpdateCustBalCdata.setInt(8, c.c_id);
 
             payUpdateCustBalCdata.execute();
-            int result = payUpdateCustBalCdata.getUpdateCount();
-
-            if (result == 0) {
-                throw new RuntimeException("Error in PYMNT Txn updating User C_ID=" + c.c_id + " C_W_ID=" + customerWarehouseID + " C_D_ID=" + customerDistrictID);
-            }
-
             var rs = payUpdateCustBalCdata.getResultSet();
-            Function<Value, Value> set = (val)->{
-                val.setValue("C_BALANCE", String.valueOf(c.c_balance));
-                val.setValue("C_YTD_PAYMENT", String.valueOf(c.c_ytd_payment));
-                val.setValue("C_PAYMENT_CNT", String.valueOf(c.c_data));
-                val.setValue("WRITEID", evID);
-                return val;
-            };
-            var p = c.getUpdateEventInfo(set, rs);
+            int result = SQLUtilHistory.size(rs);
+
+            var p = c.getUpdateEventInfo(rs);
             Function<Value, Boolean> where = (val) ->
                 val != null &&
                 String.valueOf(customerWarehouseID).equals(val.getValue("C_W_ID")) &&
                 String.valueOf(customerDistrictID).equals(val.getValue("C_D_ID")) &&
                 String.valueOf(c.c_id).equals(val.getValue("C_ID"));
             events.add(new UpdateEvent(id, so, po, p.first, p.second, where, c.getTableNames()));
+
+            if (result == 0) {
+                throw new RuntimeException("Error in PYMNT Txn updating User C_ID=" + c.c_id + " C_W_ID=" + customerWarehouseID + " C_D_ID=" + customerDistrictID);
+            }
         }
     }
 
@@ -528,25 +521,22 @@ public class PaymentNDHistory extends TPCCProcedureNDHistory {
             payUpdateCustBal.setInt(7, c.c_id);
 
             payUpdateCustBal.execute();
-            int result = payUpdateCustBal.getUpdateCount();
-            if (result == 0) {
-                throw new RuntimeException("C_ID=" + c.c_id + " C_W_ID=" + customerWarehouseID + " C_D_ID=" + customerDistrictID + " not found!");
-            }
+
             var rs = payUpdateCustBal.getResultSet();
-            Function<Value, Value> set = (val)->{
-                val.setValue("C_BALANCE", String.valueOf(c.c_balance));
-                val.setValue("C_YTD_PAYMENT", String.valueOf(c.c_ytd_payment));
-                val.setValue("C_PAYMENT_CNT", String.valueOf(c.c_payment_cnt));
-                val.setValue("WRITEID", evID);
-                return val;
-            };
-            var p = c.getUpdateEventInfo(set, rs);
+
+            int result = SQLUtilHistory.size(rs);
+
+            var p = c.getUpdateEventInfo(rs);
             Function<Value, Boolean> where = (val) ->
                 val != null &&
                 String.valueOf(customerWarehouseID).equals(val.getValue("C_W_ID")) &&
                 String.valueOf(customerDistrictID).equals(val.getValue("C_D_ID")) &&
                 String.valueOf(c.c_id).equals(val.getValue("C_ID"));
             events.add(new UpdateEvent(id, so, po, p.first, p.second, where, c.getTableNames()));
+
+            if (result == 0) {
+                throw new RuntimeException("C_ID=" + c.c_id + " C_W_ID=" + customerWarehouseID + " C_D_ID=" + customerDistrictID + " not found!");
+            }
         }
     }
 
@@ -593,14 +583,8 @@ public class PaymentNDHistory extends TPCCProcedureNDHistory {
             payGetCust.setInt(3, c_id);
 
             try (ResultSet rs = payGetCust.executeQuery()) {
-                if (!rs.next()) {
-                    throw new RuntimeException("C_ID=" + c_id + " C_D_ID=" + c_d_id + " C_W_ID=" + c_w_id + " not found!");
-                }
 
-                CustomerHistory c = TPCCUtilHistory.newCustomerFromResults(rs);
-                c.c_id = c_id;
-                c.c_last = rs.getString("C_LAST");
-
+                var c = new CustomerHistory();
                 var p = c.getSelectEventInfo(rs);
                 Function<Value, Boolean> where = (val) ->
                 val != null &&
@@ -608,6 +592,14 @@ public class PaymentNDHistory extends TPCCProcedureNDHistory {
                     String.valueOf(c_d_id).equals(val.getValue("C_D_ID")) &&
                     String.valueOf(c_id).equals(val.getValue("C_ID"));
                 events.add(new SelectEvent(id, so, po, p, where, c.getTableNames()));
+
+                if (!rs.next()) {
+                    throw new RuntimeException("C_ID=" + c_id + " C_D_ID=" + c_d_id + " C_W_ID=" + c_w_id + " not found!");
+                }
+
+                c = TPCCUtilHistory.newCustomerFromResults(rs);
+                c.c_id = c_id;
+                c.c_last = rs.getString("C_LAST");
                 return c;
             }
         }

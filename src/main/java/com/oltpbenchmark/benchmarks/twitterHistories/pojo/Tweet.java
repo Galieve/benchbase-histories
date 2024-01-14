@@ -32,7 +32,7 @@ public class Tweet implements PojoHistory {
 
     public long id;
 
-    public long uid;
+    public int uid;
 
     public String text;
 
@@ -44,14 +44,14 @@ public class Tweet implements PojoHistory {
     @Override
     public List<Pair<String, String>> getPKsList() {
         return List.of(
-            new Pair<>("INT", "ID")
+            new Pair<>("LONG", "ID")
         );
     }
 
     @Override
     public List<Pair<String, String>> getValuesList() {
         return List.of(
-            new Pair<>("INT", "ID"),
+            new Pair<>("LONG", "ID"),
             new Pair<>("INT", "UID"),
             new Pair<>("STRING", "TEXT"),
             new Pair<>("TIMESTAMP", "CREATEDATE"),

@@ -31,26 +31,28 @@ public interface PojoHistory {
     }
     public default HashMap<Variable, EventID>
     getSelectEventInfo(ResultSet rs) throws SQLException{
-        return getUpdateEventInfo((val)-> val, rs, 0).second;
+        return getEventInfo((val)-> val, rs, 0).second;
     }
 
     public default HashMap<Variable, Value>
     getInsertEventInfo(ResultSet rs) throws SQLException{
-        return getUpdateEventInfo((val)-> val, rs, 0).first;
+        return getEventInfo((val)-> val, rs, 0).first;
     }
 
     public default Pair<HashMap<Variable, Value>, HashMap<Variable, EventID>>
     getDeleteEventInfo(ResultSet rs) throws SQLException{
-        return getUpdateEventInfo((val)-> null, rs, 0);
+        return getEventInfo((val)-> null, rs, 0);
     }
 
-    public default Pair<HashMap<Variable, Value>, HashMap<Variable, EventID>> getUpdateEventInfo(Function<Value, Value> set, ResultSet rs) throws SQLException{
-        return getUpdateEventInfo(set, rs, 1);
+    public default Pair<HashMap<Variable, Value>, HashMap<Variable, EventID>> getUpdateEventInfo(ResultSet rs) throws SQLException{
+        return getEventInfo((val)->val, rs, 1);
     }
 
-    private Pair<HashMap<Variable, Value>, HashMap<Variable, EventID>> getUpdateEventInfo(Function<Value, Value> set, ResultSet rs, int update) throws SQLException {
+    private Pair<HashMap<Variable, Value>, HashMap<Variable, EventID>> getEventInfo(Function<Value, Value> set, ResultSet rs, int update) throws SQLException {
         HashMap<Variable, Value> writtenVariables = new HashMap<>();
         HashMap<Variable, EventID> wroInverse = new HashMap<>();
+
+        int now = rs.getRow();
 
         var fieldsPK = getPKsList();
         var fieldsVal = getValuesList();
@@ -78,6 +80,8 @@ public interface PojoHistory {
             writtenVariables.put(variable, set.apply(value));
             wroInverse.put(variable, new EventID(getWriteID(rs, update)));
         }
+
+        rs.absolute(now);
         return new Pair<>(writtenVariables, wroInverse);
     }
 

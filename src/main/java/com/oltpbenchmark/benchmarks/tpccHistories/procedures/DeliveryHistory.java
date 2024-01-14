@@ -27,6 +27,7 @@ import com.oltpbenchmark.benchmarks.tpccHistories.pojo.CustomerHistory;
 import com.oltpbenchmark.benchmarks.tpccHistories.pojo.NewOrderHistory;
 import com.oltpbenchmark.benchmarks.tpccHistories.pojo.OpenOrderHistory;
 import com.oltpbenchmark.benchmarks.tpccHistories.pojo.OrderLineHistory;
+import com.oltpbenchmark.utilHistory.SQLUtilHistory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -205,9 +206,10 @@ public class DeliveryHistory extends TPCCProcedureHistory {
             delivDeleteNewOrder.setInt(3, w_id);
 
             delivDeleteNewOrder.execute();
-            int result = delivDeleteNewOrder.getUpdateCount();
-
             var rs = delivDeleteNewOrder.getResultSet();
+
+            int result = SQLUtilHistory.size(rs);
+
             var no = new NewOrderHistory();
             var p = no.getDeleteEventInfo(rs);
             Function<Value, Boolean> where = (val) ->
@@ -238,11 +240,7 @@ public class DeliveryHistory extends TPCCProcedureHistory {
             delivGetCustId.setInt(3, w_id);
 
             try (ResultSet rs = delivGetCustId.executeQuery()) {
-                if (!rs.next()) {
-                    String msg = String.format("Failed to retrieve ORDER record [W_ID=%d, D_ID=%d, O_ID=%d]", w_id, d_id, no_o_id);
-                    throw new RuntimeException(msg);
-                }
-                var ret = rs.getInt("O_C_ID");
+
                 var oo = new OpenOrderHistory();
                 var p = oo.getSelectEventInfo(rs);
                 Function<Value, Boolean> where = (val) ->
@@ -252,7 +250,13 @@ public class DeliveryHistory extends TPCCProcedureHistory {
                     String.valueOf(no_o_id).equals(val.getValue("O_ID"));
                 events.add(new SelectEvent(id, so, po, p, where, oo.getTableNames()));
 
-                return ret;
+                rs.beforeFirst();
+                if (!rs.next()) {
+                    String msg = String.format("Failed to retrieve ORDER record [W_ID=%d, D_ID=%d, O_ID=%d]", w_id, d_id, no_o_id);
+                    throw new RuntimeException(msg);
+                }
+
+                return rs.getInt("O_C_ID");
             }
         }
     }
@@ -268,27 +272,24 @@ public class DeliveryHistory extends TPCCProcedureHistory {
             delivUpdateCarrierId.setInt(5, w_id);
 
             delivUpdateCarrierId.execute();
-            int result = delivUpdateCarrierId.getUpdateCount();
 
-
-            if (result != 1) {
-                String msg = String.format("Failed to update ORDER record [W_ID=%d, D_ID=%d, O_ID=%d]", w_id, d_id, no_o_id);
-                throw new RuntimeException(msg);
-            }
             var rs = delivUpdateCarrierId.getResultSet();
-            Function<Value, Value> set = (val)->{
-                val.setValue("O_CARRIER_ID", val.getValue("O_CARRIER_ID"));
-                val.setValue("WRITEID", evID);
-                return val;
-            };
+
+            int result = SQLUtilHistory.size(rs);
+
             var oo = new OpenOrderHistory();
-            var p = oo.getUpdateEventInfo(set, rs);
+            var p = oo.getUpdateEventInfo(rs);
             Function<Value, Boolean> where = (val) ->
                 val != null &&
                 String.valueOf(w_id).equals(val.getValue("O_W_ID")) &&
                 String.valueOf(d_id).equals(val.getValue("O_D_ID")) &&
                 String.valueOf(no_o_id).equals(val.getValue("O_ID"));
             events.add(new UpdateEvent(id, so, po, p.first, p.second, where, oo.getTableNames()));
+
+            if (result != 1) {
+                String msg = String.format("Failed to update ORDER record [W_ID=%d, D_ID=%d, O_ID=%d]", w_id, d_id, no_o_id);
+                throw new RuntimeException(msg);
+            }
         }
     }
 
@@ -305,27 +306,24 @@ public class DeliveryHistory extends TPCCProcedureHistory {
             delivUpdateDeliveryDate.setInt(5, w_id);
 
             delivUpdateDeliveryDate.execute();
-            int result = delivUpdateDeliveryDate.getUpdateCount();
+            var rs = delivUpdateDeliveryDate.getResultSet();
+
+            int result = SQLUtilHistory.size(rs);
+
+
+            var ol = new OrderLineHistory();
+            var p = ol.getUpdateEventInfo(rs);
+            Function<Value, Boolean> where = (val) ->
+                val != null &&
+                String.valueOf(w_id).equals(val.getValue("OL_W_ID")) &&
+                String.valueOf(d_id).equals(val.getValue("OL_D_ID")) &&
+                String.valueOf(no_o_id).equals(val.getValue("OL_O_ID"));
+            events.add(new UpdateEvent(id, so, po, p.first, p.second, where, ol.getTableNames()));
 
             if (result == 0) {
                 String msg = String.format("Failed to update ORDER_LINE records [W_ID=%d, D_ID=%d, O_ID=%d]", w_id, d_id, no_o_id);
                 throw new RuntimeException(msg);
             }
-
-            var rs = delivUpdateDeliveryDate.getResultSet();
-            Function<Value, Value> set = (val)->{
-                val.setValue("O_CARRIER_ID", val.getValue("O_CARRIER_ID"));
-                val.setValue("WRITEID", evID);
-                return val;
-            };
-            var ol = new OrderLineHistory();
-            var p = ol.getUpdateEventInfo(set, rs);
-            Function<Value, Boolean> where = (val) ->
-                val != null &&
-                String.valueOf(w_id).equals(val.getValue("OL_W_ID")) &&
-                String.valueOf(d_id).equals(val.getValue("O_D_ID")) &&
-                String.valueOf(no_o_id).equals(val.getValue("O_O_ID"));
-            events.add(new UpdateEvent(id, so, po, p.first, p.second, where, ol.getTableNames()));
         }
     }
 
@@ -336,10 +334,7 @@ public class DeliveryHistory extends TPCCProcedureHistory {
             delivSumOrderAmount.setInt(3, w_id);
 
             try (ResultSet rs = delivSumOrderAmount.executeQuery()) {
-                if (!rs.next()) {
-                    String msg = String.format("Failed to retrieve ORDER_LINE records [W_ID=%d, D_ID=%d, O_ID=%d]", w_id, d_id, no_o_id);
-                    throw new RuntimeException(msg);
-                }
+
 
                 var ol = new OrderLineHistory();
                 var p = ol.getSelectEventInfo(rs);
@@ -350,6 +345,11 @@ public class DeliveryHistory extends TPCCProcedureHistory {
                     String.valueOf(no_o_id).equals(val.getValue("OL_O_ID"));
                 events.add(new SelectEvent(id, so, po, p, where, ol.getTableNames()));
 
+                rs.beforeFirst();
+                if (!rs.next()) {
+                    String msg = String.format("Failed to retrieve ORDER_LINE records [W_ID=%d, D_ID=%d, O_ID=%d]", w_id, d_id, no_o_id);
+                    throw new RuntimeException(msg);
+                }
                 rs.beforeFirst();
                 int sum = 0;
                 while(rs.next()){
@@ -373,25 +373,24 @@ public class DeliveryHistory extends TPCCProcedureHistory {
             delivUpdateCustBalDelivCnt.setInt(5, c_id);
 
             delivUpdateCustBalDelivCnt.execute();
-            int result = delivUpdateCustBalDelivCnt.getUpdateCount();
-            if (result == 0) {
-                String msg = String.format("Failed to update CUSTOMER record [W_ID=%d, D_ID=%d, C_ID=%d]", w_id, d_id, c_id);
-                throw new RuntimeException(msg);
-            }
             var rs = delivUpdateCustBalDelivCnt.getResultSet();
+
+            int result = SQLUtilHistory.size(rs);
+
             var c = new CustomerHistory();
-            Function<Value, Value> set = (val)->{
-                val.setValue("C_BALANCE", String.valueOf(Float.parseFloat(val.getValue("C_BALANCE")) + orderLineTotal));
-                val.setValue("WRITEID", evID);
-                return val;
-            };
-            var p = c.getUpdateEventInfo(set, rs);
+
+            var p = c.getUpdateEventInfo(rs);
             Function<Value, Boolean> where = (val) ->
                 val != null &&
                 String.valueOf(w_id).equals(val.getValue("C_W_ID")) &&
                 String.valueOf(d_id).equals(val.getValue("C_D_ID")) &&
                 String.valueOf(c_id).equals(val.getValue("C_ID"));
             events.add(new UpdateEvent(id, so, po, p.first, p.second, where, c.getTableNames()));
+
+            if (result == 0) {
+                String msg = String.format("Failed to update CUSTOMER record [W_ID=%d, D_ID=%d, C_ID=%d]", w_id, d_id, c_id);
+                throw new RuntimeException(msg);
+            }
         }
     }
 

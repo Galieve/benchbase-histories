@@ -115,10 +115,7 @@ public class StockLevelNDHistory extends TPCCProcedureNDHistory {
             stockGetDistOrderId.setInt(2, d_id);
 
             try (ResultSet rs = stockGetDistOrderId.executeQuery()) {
-                if (!rs.next()) {
 
-                    throw new RuntimeException("D_W_ID=" + w_id + " D_ID=" + d_id + " not found!");
-                }
                 var d = new DistrictHistory();
                 var p = d.getSelectEventInfo(rs);
                 Function<Value, Boolean> where = (val) ->
@@ -128,7 +125,10 @@ public class StockLevelNDHistory extends TPCCProcedureNDHistory {
                 events.add(new SelectEvent(id, so, po, p, where, d.getTableNames()));
 
                 rs.beforeFirst();
-                rs.next();
+                if (!rs.next()) {
+
+                    throw new RuntimeException("D_W_ID=" + w_id + " D_ID=" + d_id + " not found!");
+                }
                 return rs.getInt("D_NEXT_O_ID");
             }
         }

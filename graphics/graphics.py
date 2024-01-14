@@ -416,22 +416,23 @@ def parallel_filter(values):
     return result
 
 
-def plot_curve(folder, name, n):
+def plot_curve(folder, name, isolation, n):
     path = get_path(folder)
-    data_path = path + name + '-data.csv'
+    data_path = path + name + '-' + isolation + '-data.csv'
     df = load_csv(data_path)
 
     maxX = df['Case'].max()
     plt.figure()
     plt.rc('figure', titlesize=20)
 
-    df = df[['Running Time (ms)', 'Creation Time (ms)', 'Evaluation Time (ms)']]
+    df = df[['Running Time (ms)', 'Evaluation Time (ms)']]
+    #df = df[['Running Time (ms)', 'Creation Time (ms)', 'Evaluation Time (ms)']]
     ax = df.plot.area()
 
     maxY = max(60000, sum(df.max(axis=0)))
     # ax = df["Time (ms)"].plot()
     # df['Running time (ms)'].plot()
-    plt.title('Benchmark ' + name + ' with ' + n + ' sessions')
+    plt.title('Benchmark ' + name +'(' + isolation + ')'+ ' with ' + n + ' sessions')
 
     ax.set_xlabel('Number of transactions per session')
     ax.set_ylabel('Time (ms)')
@@ -442,8 +443,8 @@ def plot_curve(folder, name, n):
     plt.ylim([0 - 0.25, maxY + 0.25])
     print('Saving...')
 
-    plt.savefig(path + name + '.eps', format='eps', bbox_inches='tight')
-    plt.savefig(path + name + '.png', format='png', bbox_inches='tight')
+    plt.savefig(path + name + '-' + isolation + '.eps', format='eps', bbox_inches='tight')
+    plt.savefig(path + name + '-' + isolation + '.png', format='png', bbox_inches='tight')
 
     print('Saved! :)')
 
@@ -479,9 +480,9 @@ def aux():
     return
 
 
-def plot_timeout(folder, name, n):
+def plot_timeout(folder, name, isolation, n):
     path = get_path(folder)
-    data_path = path + name + '-data-all.csv'
+    data_path = path + name +'-' + isolation+ '-data-all.csv'
     df = load_csv(data_path)
 
     maxX = df['Case'].max()
@@ -501,7 +502,7 @@ def plot_timeout(folder, name, n):
     maxY = 100
     # ax = df["Time (ms)"].plot()
     # df['Running time (ms)'].plot()
-    ax.set_title('Benchmark ' + name + ' with ' + n + ' sessions')
+    ax.set_title('Benchmark ' + name +'(' + isolation + ')'+ ' with ' + n + ' sessions')
 
     ax.set_xlabel('Number of transactions per session')
     ax.set_ylabel('Timeout probabilty')
@@ -512,12 +513,54 @@ def plot_timeout(folder, name, n):
     plt.ylim([0 - 0.25, maxY + 0.25])
     print('Saving...')
 
-    plt.savefig(path + name + '-timeouts.eps', format='eps', bbox_inches='tight')
-    plt.savefig(path + name + '-timeouts.png', format='png', bbox_inches='tight')
+    plt.savefig(path + name+'-' + isolation + '-timeouts.eps', format='eps', bbox_inches='tight')
+    plt.savefig(path + name +'-' + isolation+ '-timeouts.png', format='png', bbox_inches='tight')
 
     print('Saved! :)')
 
     return
+
+
+def plot_oos(folder, name, isolation, n):
+    path = get_path(folder)
+    data_path = path + name +'-' + isolation+ '-data-all.csv'
+    df = load_csv(data_path)
+
+    maxX = df['Case'].max()
+    plt.figure()
+    plt.rc('figure', titlesize=20)
+
+    df = df[['Case', 'OOS']]
+    cases = list(set(map(lambda x: int(x), df['Case'].tolist())))
+    timeouts = {}
+    for c in cases:
+        c_t = df[df['Case'] == c]
+        t_case = c_t[c_t['OOS'] == True]
+        timeouts[c] = t_case['OOS'].count() * 20
+
+    plt.plot(timeouts.keys(), timeouts.values())
+    ax = plt.gca()
+    maxY = 100
+    # ax = df["Time (ms)"].plot()
+    # df['Running time (ms)'].plot()
+    ax.set_title('Benchmark ' + name +'(' + isolation + ')'+ ' with ' + n + ' sessions')
+
+    ax.set_xlabel('Number of transactions per session')
+    ax.set_ylabel('OOS probabilty')
+
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.xlim([1 - 0.05, maxX - 1 + 0.05])
+    plt.ylim([0 - 0.25, maxY + 0.25])
+    print('Saving...')
+
+    plt.savefig(path + name+'-' + isolation + '-oos.eps', format='eps', bbox_inches='tight')
+    plt.savefig(path + name +'-' + isolation+ '-oos.png', format='png', bbox_inches='tight')
+
+    print('Saved! :)')
+
+    return
+
 
 
 if __name__ == "__main__":
@@ -528,12 +571,15 @@ if __name__ == "__main__":
 
     set_source_dir()
 
-    for i in range(1, len(sys.argv), 2):
+    for i in range(1, len(sys.argv), 3):
         name = sys.argv[i]
-        sessions = sys.argv[i + 1]
-        folder = "results/testFiles/" + name + "/"
+        isolation = sys.argv[i + 1]
+        sessions = sys.argv[i + 2]
+        folder = "results/testFiles/" + name + "/" + isolation +"/"
 
         # calculate_parameters(mode, labels)
         # plot_depending_on_mode(mode)
-        plot_curve(folder, name, sessions)
-        plot_timeout(folder, name, sessions)
+        plot_curve(folder, name, isolation, sessions)
+        plot_timeout(folder, name, isolation, sessions)
+        plot_oos(folder, name, isolation, sessions)
+

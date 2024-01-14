@@ -50,20 +50,13 @@ public abstract class WorkerHistory<T extends BenchmarkModule> extends Worker<T>
         ArrayList<Event> events = new ArrayList<>();
         TransactionStatus status = TransactionStatus.UNKNOWN;
 
-        if(txnType instanceof TransactionTypeHistory){
-            var txnTypeH = (TransactionTypeHistory) txnType;
-            if(txnTypeH.getIsolationLevel() != null) {
-                conn.setTransactionIsolation(txnTypeH.getIsolationLevel().getMode());
-            }
-        }
-
         var iso = IsolationLevel.get(conn.getTransactionIsolation());
 
         try {
             status = executeWorkHistory(conn, txnType, events, getId(), transactions.size());
             transactions.add(new Transaction(events, this.getId(), transactions.size(), iso));
             return status;
-        }catch (Procedure.UserAbortException e){
+        }catch (Procedure.UserAbortException | SQLException e){
             events.add(new AbortEvent(this.getId(), transactions.size(), events.size()));
             transactions.add(new Transaction(events, this.getId(), transactions.size(), iso));
             throw e;
@@ -120,6 +113,8 @@ public abstract class WorkerHistory<T extends BenchmarkModule> extends Worker<T>
                     }
                 }
 
+                var connIso = conn.getTransactionIsolation();
+
                 //We prioritize the isolation level declared by the method rather the global isolation level.
                 if(transactionType instanceof TransactionTypeHistory){
                     var typeH = (TransactionTypeHistory) transactionType;
@@ -145,11 +140,14 @@ public abstract class WorkerHistory<T extends BenchmarkModule> extends Worker<T>
                     }
 
                     conn.commit();
+                    conn.setTransactionIsolation(connIso);
 
                     break;
 
                 } catch (Procedure.UserAbortException ex) {
                     conn.rollback();
+                    conn.setTransactionIsolation(connIso);
+
 
                     ABORT_LOG.debug(String.format("%s Aborted", transactionType), ex);
 
@@ -159,6 +157,7 @@ public abstract class WorkerHistory<T extends BenchmarkModule> extends Worker<T>
 
                 } catch (SQLException ex) {
                     conn.rollback();
+                    conn.setTransactionIsolation(connIso);
 
                     if (isRetryable(ex)) {
                         LOG.debug(String.format("Retryable SQLException occurred during [%s]... current retry attempt [%d], max retry attempts [%d], sql state [%s], error code [%d].", transactionType, retryCount, maxRetryCount, ex.getSQLState(), ex.getErrorCode()), ex);

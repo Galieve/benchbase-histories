@@ -19,6 +19,7 @@
 package com.oltpbenchmark.benchmarks.seatsHistories.pojo;
 
 import com.oltpbenchmark.apiHistory.PojoHistory;
+import com.oltpbenchmark.benchmarks.seatsHistories.SEATSConstantsHistory;
 import com.oltpbenchmark.benchmarks.twitterHistories.TwitterConstantsHistory;
 import com.oltpbenchmark.util.Pair;
 
@@ -87,7 +88,7 @@ public class Reservation implements PojoHistory {
     @Override
     public Set<String> getTableNames() {
         if(table == null){
-            table = new HashSet<>(Collections.singleton(TwitterConstantsHistory.TABLENAME_TWEETS));
+            table = new HashSet<>(Collections.singleton(SEATSConstantsHistory.TABLENAME_RESERVATION));
         }
         return table;
     }

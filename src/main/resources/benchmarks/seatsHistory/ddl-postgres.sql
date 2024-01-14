@@ -23,7 +23,8 @@ CREATE TABLE config_profile (
     cfp_flight_offset       int,
     cfp_reservation_offset  int,
     cfp_num_reservations    bigint                              NOT NULL,
-    cfp_code_ids_xrefs      varchar(16004)                      NOT NULL
+    cfp_code_ids_xrefs      varchar(16004)                      NOT NULL,
+    writeID      varchar(256) NOT NULL,
 );
 
 --
@@ -33,6 +34,7 @@ CREATE TABLE config_histograms (
     cfh_name       varchar(128)   NOT NULL,
     cfh_data       varchar(10005) NOT NULL,
     cfh_is_airport int DEFAULT 0,
+    writeID      varchar(256) NOT NULL,
     PRIMARY KEY (cfh_name)
 );
 
@@ -44,6 +46,7 @@ CREATE TABLE country (
     co_name   varchar(64) NOT NULL,
     co_code_2 varchar(2)  NOT NULL,
     co_code_3 varchar(3)  NOT NULL,
+    writeID      varchar(256) NOT NULL,
     PRIMARY KEY (co_id)
 );
 
@@ -77,6 +80,7 @@ CREATE TABLE airport (
     ap_iattr13     bigint,
     ap_iattr14     bigint,
     ap_iattr15     bigint,
+    writeID      varchar(256) NOT NULL,
     PRIMARY KEY (ap_id),
     FOREIGN KEY (ap_co_id) REFERENCES country (co_id)
 );
@@ -88,6 +92,7 @@ CREATE TABLE airport_distance (
     d_ap_id0   bigint NOT NULL,
     d_ap_id1   bigint NOT NULL,
     d_distance float  NOT NULL,
+    writeID      varchar(256) NOT NULL,
     PRIMARY KEY (d_ap_id0, d_ap_id1),
     FOREIGN KEY (d_ap_id0) REFERENCES airport (ap_id),
     FOREIGN KEY (d_ap_id1) REFERENCES airport (ap_id)
@@ -119,6 +124,7 @@ CREATE TABLE airline (
     al_iattr13   bigint,
     al_iattr14   bigint,
     al_iattr15   bigint,
+    writeID      varchar(256) NOT NULL,
     PRIMARY KEY (al_id),
     FOREIGN KEY (al_co_id) REFERENCES country (co_id)
 );
@@ -203,6 +209,7 @@ CREATE TABLE frequent_flyer (
     ff_iattr13  bigint,
     ff_iattr14  bigint,
     ff_iattr15  bigint,
+    writeID      varchar(256) NOT NULL,
     PRIMARY KEY (ff_c_id, ff_al_id),
     FOREIGN KEY (ff_c_id) REFERENCES customer (c_id),
     FOREIGN KEY (ff_al_id) REFERENCES airline (al_id)
@@ -253,6 +260,7 @@ CREATE TABLE flight (
     f_iattr27      bigint,
     f_iattr28      bigint,
     f_iattr29      bigint,
+    writeID      varchar(256) NOT NULL,
     PRIMARY KEY (f_id),
     FOREIGN KEY (f_al_id) REFERENCES airline (al_id),
     FOREIGN KEY (f_depart_ap_id) REFERENCES airport (ap_id),
@@ -278,6 +286,7 @@ CREATE TABLE reservation (
     r_iattr06 bigint,
     r_iattr07 bigint,
     r_iattr08 bigint,
+    writeID      varchar(256) NOT NULL,
     UNIQUE (r_f_id, r_seat),
     PRIMARY KEY (r_id, r_c_id, r_f_id),
     FOREIGN KEY (r_c_id) REFERENCES customer (c_id),

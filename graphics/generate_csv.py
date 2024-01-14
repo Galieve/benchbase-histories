@@ -16,6 +16,21 @@ def get_path_file(filename, subfolder=""):
     file_path = os.path.join(file_dir, subfolder, filename)
     return file_path
 
+def oos(line):
+    return 'Rejected Transactions (Server Retry)' in line or \
+        'Rejected Transactions (Retry Different)' in line or \
+        'Unexpected SQL Errors' in line or \
+        'Unknown Status Transactions' in line
+
+def is_out_of_scope(name, subfolder=""):
+    file_path = get_path_file(name, subfolder)
+    f = open(file_path, 'r')
+    content = f.read()
+    content = content.split('\n')
+    indexes = [i for i in range(0, len(content))
+               if oos(content[i])]
+    empty = [i for i in indexes if '<EMPTY>' in content[i+1] ]
+    return len(empty) != 4
 
 def has_deadlock(name, subfolder=""):
     file_path = get_path_file(name, subfolder)
@@ -45,8 +60,6 @@ def process_file(path, csvfile, jason_file, output, i):
     jfile = path + "/" + jason_file
     ofile = path + "/" + output
 
-    if has_deadlock(ofile):
-        return pd.DataFrame({'Case' : []})
 
     df = load_csv(file)
     data = load_json(jfile)
@@ -55,6 +68,8 @@ def process_file(path, csvfile, jason_file, output, i):
     df = df.rename(columns=lambda x: x.strip())
     df['Timeout'] = df['Timeout'].apply(lambda x: x.strip())
     df['Consistent'] = df['Consistent'].apply(lambda x: x.strip())
+    df['OOS'] = str(is_out_of_scope(ofile))
+    df['Deadlock'] = str(has_deadlock(ofile))
     return df
 
 
@@ -70,7 +85,7 @@ def process_avg_case(df_case, case):
     return pd.DataFrame.from_records([df_map], index=[0])
 
 
-def listFiles(folder, name):
+def listFiles(folder, benchmarkName, isolation):
     path = getPath(folder)
     case_names = [f for f in listdir(path) if isdir(join(path, f))]
     files = {}
@@ -107,12 +122,13 @@ def listFiles(folder, name):
             files[case][example] = f, j, o
 
     df = pd.DataFrame(columns=['Case', 'Timeout', 'Consistent'])
-    df_all = pd.DataFrame(columns=['Case'])
+    df_all = pd.DataFrame(columns=['Case', 'Sub-case'])
 
     df['Timeout'] = df['Timeout'].astype(bool)
     df['Consistent'] = df['Consistent'].astype(bool)
 
     deadlocks = 0
+    oos = 0
 
     for c, example_map in files.items():
         df_case = pd.DataFrame(columns=['Case'])
@@ -121,11 +137,16 @@ def listFiles(folder, name):
         for e, (fileCSV, jason, output) in example_map.items():
             path_case = path + "/case-" + c + e
             df_results = process_file(path_case, fileCSV, jason, output, c)
-            df_all = pd.concat([df_all, df_results], ignore_index=True)
             df_case = pd.concat([df_case, df_results], ignore_index=True)
-            if df_results.empty:
-                print("Deadlock at case: " + c + e)
+
+            df_results['Sub-case'] = e
+            df_all = pd.concat([df_all, df_results], ignore_index=True)
+            if df_results['Deadlock'].iloc[0] == 'True':
+                #print("Deadlock at case: " + c + e)
                 deadlocks += 1
+            if df_results['OOS'].iloc[0] == 'True':
+                #print("OOS at case: " + c + e)
+                oos += 1
 
         df_case = process_avg_case(df_case, c)
 
@@ -134,20 +155,21 @@ def listFiles(folder, name):
 
     # print(df.head())
     df = df.sort_values(by=['Case'])
-    df_all = df_all.sort_values(by=['Case'])
+    df_all = df_all.sort_values(by=['Case', 'Sub-case'])
 
-    df.to_csv(folder + '/' + name + '-data.csv', index=False, encoding='utf-8', sep=";")
-    df_all.to_csv(folder + '/' + name + '-data-all.csv', index=False, encoding='utf-8', sep=";")
+    df.to_csv(folder + '/' + benchmarkName + '-' + isolation + '-data.csv', index=False, encoding='utf-8', sep=";")
+    df_all.to_csv(folder + '/' + benchmarkName+ '-' + isolation  + '-data-all.csv', index=False, encoding='utf-8', sep=";")
 
     print(deadlocks)
+    print(oos)
 
 
 if __name__ == "__main__":
     setSourceDir()
     print('Number of arguments:', len(sys.argv), 'arguments.')
     print('Argument List:', str(sys.argv))
-    for i in range(1, len(sys.argv)):
+    for i in range(1, len(sys.argv),2):
 
-        folder = "results/testFiles/" + sys.argv[i]
+        folder = "results/testFiles/" + sys.argv[i] + "/" + sys.argv[i+1]
 
-        listFiles(folder, sys.argv[i])
+        listFiles(folder, sys.argv[i], sys.argv[i+1])

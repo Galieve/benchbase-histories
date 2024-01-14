@@ -34,7 +34,8 @@ public abstract class IsolationLevel {
     public static IsolationLevel get(Integer isolationLevel) {
         if(isolationLevel == null) return null;
         else if(isolationLevel == Connection.TRANSACTION_SERIALIZABLE) return Serializabilty.getIsolationLevel();
-        else if(isolationLevel == Connection.TRANSACTION_REPEATABLE_READ) return RepeatableRead.getIsolationLevel();
+        else if(isolationLevel == Connection.TRANSACTION_REPEATABLE_READ) return SnapshotIsolation.getIsolationLevel();
+        //return RepeatableRead.getIsolationLevel();
         else if(isolationLevel == Connection.TRANSACTION_READ_COMMITTED) return ReadCommitted.getIsolationLevel();
         //We do not accept ReadUncommitted.
         else return null;
