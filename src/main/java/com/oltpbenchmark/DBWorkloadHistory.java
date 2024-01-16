@@ -503,7 +503,7 @@ public class DBWorkloadHistory extends DBWorkload{
                 }
                 */
 
-                var results = evaluateHistory(transactions);
+                var results = evaluateHistory(transactions, argsLine);
                 writeOutputHistory(results, argsLine);
 
             } catch (Throwable ex) {
@@ -555,19 +555,25 @@ public class DBWorkloadHistory extends DBWorkload{
         return r;
     }
 
-    private static ResultHistory evaluateHistory(ArrayList<ArrayList<Transaction>> transactions){
+    private static ResultHistory evaluateHistory(ArrayList<ArrayList<Transaction>> transactions, CommandLine argsLine){
 
 
         var r = new ResultHistory();
+        long time = 60;
         r.setTimeout(false);
+        if (argsLine.hasOption("t")) {
+            time = Long.parseLong(argsLine.getOptionValue("t"));
+        }
 
 
         ExecutorService executor = Executors.newCachedThreadPool();
+
         Callable<Object> task = () -> {
             LOG.info("Creating history...");
 
             r.setCreateStartTime(System.nanoTime());
             History h = new History(transactions);
+            r.setHistory(h);
             r.setCreateEndTime(System.nanoTime());
 
             LOG.info("Evaluating history...");
@@ -578,10 +584,10 @@ public class DBWorkloadHistory extends DBWorkload{
             r.setEvalEndTime(System.nanoTime());
             return ret;
         };
+
         Future<Object> future = executor.submit(task);
         try {
-            //Object result = future.get(Integer.MAX_VALUE, TimeUnit.MINUTES);
-            Object result = future.get(1, TimeUnit.MINUTES);
+            Object result = future.get(time, TimeUnit.SECONDS);
         } catch (TimeoutException ex) {
             r.setTimeout(true);
             // handle the timeout
@@ -643,16 +649,43 @@ public class DBWorkloadHistory extends DBWorkload{
 
         double timeCMS = ((double) timeC / (double) 1000000);
         double timeEMS = ((double) timeE / (double) 1000000);
+        var transactions = r.getHistory().getTransactions();
+        var sizes = new ArrayList<Integer>();
+        int totalSize = 0;
+        var ses0 = transactions.get(0);
+        int extraVariables = ses0.get(ses0.size() - 1).getEvents().size();
+        for(var ses : transactions){
+            sizes.add(ses.size());
+            totalSize += ses.size();
+        }
 
         try (PrintStream ps = new PrintStream(FileUtil.joinPath(outputDirectory, summaryFileName))) {
             LOG.info("Output history data into file: {}", summaryFileName);
 
             var cons = r.getConsistent() == null ? "Unknown" : r.getConsistent();
 
-            ps.println("Creation Time (ms), Evaluation Time (ms), Time (ms), Timeout, Consistent");
-            ps.println(timeCMS + ", " + timeEMS + ", " + (timeCMS + timeEMS) + ", " + r.isTimeout() + ", " + cons);
+            ps.println("Creation Time (ms), Evaluation Time (ms), Time (ms), Timeout, Consistent, Sizes, Total Size, Extra Variables");
+            ps.println(timeCMS + ", " + timeEMS + ", " + (timeCMS + timeEMS) + ", " + r.isTimeout() + ", " + cons + ", " + sizes + ", " + totalSize + ", " + extraVariables);
         }
 
+    }
+
+    protected static Options buildOptions(XMLConfiguration pluginConfig) {
+        Options options = DBWorkload.buildOptions(pluginConfig);
+        options.addOption("t", "time-histories", true, "Set evaluation time limit");
+        options.addOption("b", "bench", true, "[required] Benchmark class. Currently supported: " + pluginConfig.getList("/plugin//@name"));
+        options.addOption("c", "config", true, "[required] Workload configuration file");
+        options.addOption(null, "create", true, "Initialize the database for this benchmark");
+        options.addOption(null, "clear", true, "Clear all records in the database for this benchmark");
+        options.addOption(null, "load", true, "Load data using the benchmark's data loader");
+        options.addOption(null, "execute", true, "Execute the benchmark workload");
+        options.addOption("h", "help", false, "Print this help");
+        options.addOption("s", "sample", true, "Sampling window");
+        options.addOption("im", "interval-monitor", true, "Throughput Monitoring Interval in milliseconds");
+        options.addOption("d", "directory", true, "Base directory for the result files, default is current directory");
+        options.addOption(null, "dialects-export", true, "Export benchmark SQL to a dialects file");
+        options.addOption("jh", "json-histograms", true, "Export histograms to JSON file");
+        return options;
     }
 
 }

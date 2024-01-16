@@ -66,13 +66,13 @@ public interface PojoHistory {
             for(var pairFields : fieldsPK){
                 var type = pairFields.first;
                 var field = pairFields.second;
-                vPK.add(getValue(type, field, rs, update));
+                vPK.add(getValue(type, field, rs, 0));
             }
 
             for(var pairFields : fieldsVal){
                 var type = pairFields.first;
                 var field = pairFields.second;
-                vValues.put(field, getValue(type, field, rs, update));
+                vValues.put(field, getValue(type, field, rs, 0));
             }
 
             var variable = new Variable(this.getClass().getName() + ", " + String.join(", ", vPK));

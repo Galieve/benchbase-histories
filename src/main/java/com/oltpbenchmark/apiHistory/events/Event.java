@@ -17,6 +17,10 @@ public abstract class Event implements EventInterface {
 
     protected Set<String> tableNames;
 
+    protected ReadEvent re;
+
+    protected WriteEvent we;
+
     protected Event(EventType eventType, Integer id, Integer so, Integer po, Set<String> tableNames) {
         this.id = id;
         this.so = so;
@@ -24,29 +28,26 @@ public abstract class Event implements EventInterface {
         this.eventID = new EventID(id, so , po);
         this.eventType = eventType;
         this.tableNames = tableNames;
+        this.re = null;
+        this.we = null;
     }
 
-    @Override
     public final Integer getId() {
         return id;
     }
 
-    @Override
     public final Integer getSo() {
         return so;
     }
 
-    @Override
     public final EventID getEventID() {
         return eventID;
     }
 
-    @Override
     public final int getPo() {
         return po;
     }
 
-    @Override
     public boolean belongsInTable(Variable variable) {
         for(var t: tableNames){
             if(variable.getStringName().contains(t)){
@@ -56,8 +57,31 @@ public abstract class Event implements EventInterface {
         return false;
     }
 
-    @Override
     public Set<String> getTableNames() {
         return tableNames;
+    }
+
+    @Override
+    public String toString() {
+        var sb = new StringBuilder();
+        if(re != null){
+            sb.append(re).append("\n");
+        }
+        if(we != null){
+            sb.append(we).append("\n");
+        }
+        return sb.toString();
+    }
+
+    public boolean isAbort(){
+        return false;
+    }
+
+    public ReadEvent getReadEvent() {
+        return re;
+    }
+
+    public WriteEvent getWriteEvent() {
+        return we;
     }
 }

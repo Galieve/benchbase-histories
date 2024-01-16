@@ -79,7 +79,7 @@ public class History {
             for(var t: ses){
                 for(var e : t){
                     if(!e.isWrite()) continue;
-                    var w = (WriteEvent) e;
+                    var w = e.getWriteEvent();
                     writes.put(w.getEventID(), w);
                 }
             }
@@ -92,7 +92,7 @@ public class History {
             for(var t: ses){
                 for(var e: t){
                     if(e.isRead()) {
-                        var r = (ReadEvent) e;
+                        var r = e.getReadEvent();
                         var wror = r.getWroInverse();
                         for (var p : wror.entrySet()) {
                             wro.putIfAbsent(p.getKey(), new HashMap<>());
@@ -100,7 +100,7 @@ public class History {
                         }
                     }
                     if(!t.isAborted() && e.isWrite()){
-                        var w = (WriteEvent) e;
+                        var w = e.getWriteEvent();
                         for(var ws: w.getWriteSet().entrySet()){
                             wro.putIfAbsent(ws.getKey(), new HashMap<>());
                         }
@@ -129,7 +129,7 @@ public class History {
         var events = transactions.get(0).get(0).getEvents();
         var initEvent = new InitialAbsentEvent(0,0,events.size(), writeSet);
         events.add(initEvent);
-        writesIDs.put(new EventID(0,0,0), initEvent);
+        writesIDs.put(new EventID(0,0,0), initEvent.getWriteEvent());
         transactions.get(0).get(0).resetWriteSet();
     }
 
@@ -437,11 +437,11 @@ public class History {
             for(var t: se){
                 for(var e: t){
                     if(!e.isRead()) continue;
-                    var r = (ReadEvent) e;
-                    var tableNames = r.getTableNames();
+                    var r = e.getReadEvent();
+                    var tableNames = e.getTableNames();
                     for(var tableName : tableNames) {
                         for (var variable : variablePerTable.get(tableName)) {
-                            if(!r.belongsInTable(variable)) continue;
+                            if(!e.belongsInTable(variable)) continue;
                             if(!wro.get(variable).containsKey(r) && !isOneSetEmpty(co, variable, r)){
                                 eh.add(new Pair<>(r, variable));
                             }
@@ -503,28 +503,90 @@ public class History {
         return false;
     }
 
+
+    private ArrayList<ArrayList<Boolean>> computeCOFixpoint(ArrayList<ArrayList<Boolean>> coInit) throws InterruptedException {
+        var co = coInit;
+        int i = 0;
+        do {
+            coInit = co;
+            co = computeCO(coInit);
+            if(Thread.interrupted()) throw new InterruptedException();
+            ++i;
+        }
+        while (!HistoryUtil.equals(co, coInit));
+        LOG.debug("#Iterations COFixpoint: " + i);
+        return co;
+    }
+
+    protected boolean dfsCOAcyclic(ArrayList<ArrayList<Boolean>> co, ArrayList<Integer> color, Integer u){
+        color.set(u,1);
+        for(int v = 0; v < co.get(u).size(); ++v){
+            if(u == v) continue;
+            if(co.get(u).get(v)
+               && color.get(v) == 0){
+                boolean b = dfsCOAcyclic(co, color, v);
+                if(!b) return false;
+
+            }
+            else if(co.get(u).get(v)
+                    && color.get(v) == 1){
+                return false;
+            }
+        }
+        color.set(u,2);
+        return true;
+    }
+
+    protected boolean isCommitOrderAcyclic(ArrayList<ArrayList<Boolean>> co){
+        //0 = not visited, 1 = in process, 2 = finished
+        int n = co.size();
+        ArrayList<Integer> color = new ArrayList<>(Collections.nCopies(n,0));
+        for(int i = 0; i < n; ++i){
+            if(color.get(i) == 0){
+                if(!dfsCOAcyclic(co, color, i)){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     public boolean checkSOBound(ResultHistory result) throws InterruptedException {
         long now = System.nanoTime();
         var soUwr = computeSoUWr();
         var coInit = HistoryUtil.transitiveClosure(soUwr);
-        var co = coInit;
-        do {
-            coInit = co;
-            co = computeCO(coInit);
-        }
-        while (!Thread.interrupted() && !HistoryUtil.equals(co, coInit));
-        var eh = getEh(co);
 
+        var co = computeCOFixpoint(coInit);
+        if(Thread.interrupted()) throw new InterruptedException();
+        if(!isCommitOrderAcyclic(co)){
+            LOG.debug("CO is NOT acyclic!");
+            return false;
+        }
+        LOG.debug("CO is acyclic");
+
+        var eh = getEh(co);
         if(Thread.interrupted()) throw new InterruptedException();
         var xh = getXh(co, eh);
         if(Thread.interrupted()) throw new InterruptedException();
 
-        if(eh.size() != 0 && xh.size() == 0) return false;
-        else if(xh.size() == 0) return csob(co, new PrefixHistory(this), new HashSet<>());
+
+
+        if(eh.size() != 0 && xh.size() == 0){
+            LOG.debug("No possible extension!");
+            return false;
+        }
+        else if(xh.size() == 0){
+            LOG.debug("Unique CSOB call");
+            return csob(co, new PrefixHistory(this), new HashSet<>());
+        }
         else{
             var index = new ArrayList<>(Collections.nCopies(xh.size(),0));
+            int numCsob = 0;
+            LOG.debug("Multiple CSOB calls");
             do {
                 var h = new History(this);
+                var coH = HistoryUtil.deepclone(co);
+                LOG.debug("Call #" + numCsob);
                 for (int i = 0; i < index.size(); ++i) {
                     var zeroSet = xh.get(i);
                     var p = zeroSet.get(index.get(i));
@@ -532,11 +594,23 @@ public class History {
                     var r = p.second.first;
                     var w = p.second.second.getWriteSet().get(variable).first;
                     h.setWR(variable, r, w);
-                }
 
-                if (h.csob(co, new PrefixHistory(this), new HashSet<>())) {
-                    return true;
+                    int j = translator.get(transactions.get(w.getId()).get(w.getSo()));
+                    int k = translator.get(transactions.get(r.getId()).get(r.getSo()));
+                    if(j != k)
+                        coH.get(j).set(k, true);
                 }
+                coH = computeCOFixpoint(coH);
+                if(isCommitOrderAcyclic(coH)){
+                    if(h.csob(coH, new PrefixHistory(this), new HashSet<>())) {
+                        LOG.debug("Call #" + numCsob + ": consistent!");
+                       return true;
+                   }
+                }
+                else{
+                    LOG.debug("Call #" + numCsob + ": CO is NOT acyclic!");
+                }
+                ++numCsob;
 
             }while(!Thread.interrupted() && nextSet(xh, index));
             if(Thread.interrupted()) throw new InterruptedException();
@@ -554,7 +628,7 @@ public class History {
         return soUwr;
     }
 
-    public boolean csob(ArrayList<ArrayList<Boolean>> co, PrefixHistory prefix, Set<PrefixHistory> seen) throws InterruptedException {
+    private boolean csob(ArrayList<ArrayList<Boolean>> co, PrefixHistory prefix, Set<PrefixHistory> seen) throws InterruptedException {
         if(prefix.size() == co.size()){
             return true;
         }

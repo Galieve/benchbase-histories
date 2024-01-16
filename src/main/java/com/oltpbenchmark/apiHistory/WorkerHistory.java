@@ -47,34 +47,14 @@ public abstract class WorkerHistory<T extends BenchmarkModule> extends Worker<T>
     protected abstract TransactionStatus executeWorkHistory(Connection conn, TransactionType txnType, ArrayList<Event> events, int id, int soID) throws Procedure.UserAbortException, SQLException;
 
     protected final TransactionStatus executeWork(Connection conn, TransactionType txnType) throws Procedure.UserAbortException, SQLException{
-        ArrayList<Event> events = new ArrayList<>();
-        TransactionStatus status = TransactionStatus.UNKNOWN;
-
-        var iso = IsolationLevel.get(conn.getTransactionIsolation());
-
-        try {
-            status = executeWorkHistory(conn, txnType, events, getId(), transactions.size());
-            transactions.add(new Transaction(events, this.getId(), transactions.size(), iso));
-            return status;
-        }catch (Procedure.UserAbortException | SQLException e){
-            events.add(new AbortEvent(this.getId(), transactions.size(), events.size()));
-            transactions.add(new Transaction(events, this.getId(), transactions.size(), iso));
-            throw e;
-        }
+        return executeWorkHistory(conn, txnType, new ArrayList<>(), getId(), 0);
     }
 
 
-    protected void initializeHistory(ArrayList<Event> events, int id, int so){
 
-    }
     @Override
     protected final void initialize() {
-        /*
-        var events = new ArrayList<Event>();
-        initializeHistory(events, getId(), transactions.size());
-        transactions.add(new Transaction(events, this.getId(), transactions.size(), iso));
 
-        */
     }
 
     public ArrayList<Transaction> getTransactions() {
@@ -114,6 +94,8 @@ public abstract class WorkerHistory<T extends BenchmarkModule> extends Worker<T>
                 }
 
                 var connIso = conn.getTransactionIsolation();
+                ArrayList<Event> events = new ArrayList<>();
+
 
                 //We prioritize the isolation level declared by the method rather the global isolation level.
                 if(transactionType instanceof TransactionTypeHistory){
@@ -123,13 +105,15 @@ public abstract class WorkerHistory<T extends BenchmarkModule> extends Worker<T>
                     }
                 }
 
+                var iso = IsolationLevel.get(conn.getTransactionIsolation());
+
                 try {
 
                     if (LOG.isDebugEnabled()) {
                         LOG.debug(String.format("%s %s attempting...", this, transactionType));
                     }
 
-                    status = this.executeWork(conn, transactionType);
+                    status = executeWorkHistory(conn, transactionType, events, getId(), transactions.size());
 
                     if (LOG.isDebugEnabled()) {
                         LOG.debug(String.format("%s %s completed with status [%s]...", this, transactionType, status.name()));
@@ -140,12 +124,17 @@ public abstract class WorkerHistory<T extends BenchmarkModule> extends Worker<T>
                     }
 
                     conn.commit();
+                    transactions.add(new Transaction(events, this.getId(), transactions.size(), iso));
+
                     conn.setTransactionIsolation(connIso);
 
                     break;
 
                 } catch (Procedure.UserAbortException ex) {
                     conn.rollback();
+                    events.add(new AbortEvent(this.getId(), transactions.size(), events.size()));
+                    transactions.add(new Transaction(events, this.getId(), transactions.size(), iso));
+
                     conn.setTransactionIsolation(connIso);
 
 
@@ -157,6 +146,7 @@ public abstract class WorkerHistory<T extends BenchmarkModule> extends Worker<T>
 
                 } catch (SQLException ex) {
                     conn.rollback();
+                    //events.add(new AbortEvent(this.getId(), transactions.size(), events.size()));
                     conn.setTransactionIsolation(connIso);
 
                     if (isRetryable(ex)) {
@@ -174,6 +164,7 @@ public abstract class WorkerHistory<T extends BenchmarkModule> extends Worker<T>
                     }
 
                 } finally {
+
                     if (this.configuration.getNewConnectionPerTxn() && this.conn != null) {
                         try {
                             this.conn.close();

@@ -26,4 +26,11 @@ public class Variable {
     public int hashCode() {
         return Objects.hash(variable);
     }
+
+    @Override
+    public String toString() {
+        return "Variable{" +
+               "variable='" + variable + '\'' +
+               '}';
+    }
 }

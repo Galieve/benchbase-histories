@@ -73,7 +73,7 @@ public class NewOrderNDHistory extends TPCCProcedureNDHistory {
     """
         UPDATE %s
            SET D_NEXT_O_ID = D_NEXT_O_ID + 1,
-               WRITEID = CONCAT(?, ';', SPLIT_PART(WRITEID, ';', 1))
+               WRITEID = CONCAT (?, ';', SPLIT_PART (WRITEID, ';', 1))
          WHERE D_W_ID = ?
            AND D_ID = ?
          RETURNING *

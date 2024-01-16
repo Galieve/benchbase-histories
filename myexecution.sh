@@ -73,7 +73,7 @@ executeBenchmarkWeights () {
             touch "results/testFiles/${name}/case-${i}(${j})/output.out"
 
             echo java -jar benchbase.jar -b "${bch}Histories" -c "experiments/${name}/$/${name}Histories-${i}_config.xml" -d "results/testFiles/${name}/case-${i}(${j})" --create=true --load=true --execute=true
-            #java &> "results/testFiles/${name}/case-${i}(${j})/output.out" -jar benchbase.jar -b "${bch}Histories" -c "experiments/${name}/${name}Histories-${i}_config.xml" -d "results/testFiles/${name}/case-${i}(${j})" --create=true --load=true --execute=true
+            java &> "results/testFiles/${name}/case-${i}(${j})/output.out" -jar benchbase.jar -b "${bch}Histories" -c "experiments/${name}/${name}Histories-${i}_config.xml" -d "results/testFiles/${name}/case-${i}(${j})" --create=true --load=true --execute=true
         done
     done
 
@@ -85,13 +85,13 @@ executeBenchmarkWeights () {
 executeBenchmark "tpccND" "SER" "OrderStatusNDHistory" "TRANSACTION_SERIALIZABLE" "DeliveryNDHistory" "TRANSACTION_SERIALIZABLE" "StockLevelNDHistory" "TRANSACTION_SERIALIZABLE" "NewOrderNDHistory" "TRANSACTION_SERIALIZABLE" "PaymentNDHistory" "TRANSACTION_SERIALIZABLE"
 executeBenchmark "tpcc" "SER" "OrderStatusHistory" "TRANSACTION_SERIALIZABLE" "DeliveryHistory" "TRANSACTION_SERIALIZABLE" "StockLevelHistory" "TRANSACTION_SERIALIZABLE" "NewOrderHistory" "TRANSACTION_SERIALIZABLE" "PaymentHistory" "TRANSACTION_SERIALIZABLE"
 
-executeBenchmark "tpccND" "SER+RC" "OrderStatusNDHistory" "TRANSACTION_READ_COMMITTED" "DeliveryNDHistory" "TRANSACTION_READ_COMMITTED" "StockLevelNDHistory" "TRANSACTION_READ_COMMITTED" "NewOrderNDHistory" "TRANSACTION_SERIALIZABLE" "PaymentNDHistory" "TRANSACTION_SERIALIZABLE"
+#executeBenchmark "tpccND" "SER+RC" "OrderStatusNDHistory" "TRANSACTION_READ_COMMITTED" "DeliveryNDHistory" "TRANSACTION_READ_COMMITTED" "StockLevelNDHistory" "TRANSACTION_READ_COMMITTED" "NewOrderNDHistory" "TRANSACTION_SERIALIZABLE" "PaymentNDHistory" "TRANSACTION_SERIALIZABLE"
 executeBenchmark "tpcc" "SER+RC" "OrderStatusHistory" "TRANSACTION_READ_COMMITTED" "DeliveryHistory" "TRANSACTION_READ_COMMITTED" "StockLevelHistory" "TRANSACTION_READ_COMMITTED" "NewOrderHistory" "TRANSACTION_SERIALIZABLE" "PaymentHistory" "TRANSACTION_SERIALIZABLE"
 
-executeBenchmark "tpccND" "SI+RC" "OrderStatusNDHistory" "TRANSACTION_READ_COMMITTED" "DeliveryNDHistory" "TRANSACTION_READ_COMMITTED" "StockLevelNDHistory" "TRANSACTION_READ_COMMITTED" "NewOrderNDHistory" "TRANSACTION_REPEATABLE_READ" "PaymentNDHistory" "TRANSACTION_REPEATABLE_READ"
+#executeBenchmark "tpccND" "SI+RC" "OrderStatusNDHistory" "TRANSACTION_READ_COMMITTED" "DeliveryNDHistory" "TRANSACTION_READ_COMMITTED" "StockLevelNDHistory" "TRANSACTION_READ_COMMITTED" "NewOrderNDHistory" "TRANSACTION_REPEATABLE_READ" "PaymentNDHistory" "TRANSACTION_REPEATABLE_READ"
 executeBenchmark "tpcc" "SI+RC" "OrderStatusHistory" "TRANSACTION_READ_COMMITTED" "DeliveryHistory" "TRANSACTION_READ_COMMITTED" "StockLevelHistory" "TRANSACTION_READ_COMMITTED" "NewOrderHistory" "TRANSACTION_REPEATABLE_READ" "PaymentHistory" "TRANSACTION_REPEATABLE_READ"
 
-executeBenchmark "tpccND" "RC" "OrderStatusNDHistory" "TRANSACTION_READ_COMMITTED" "DeliveryNDHistory" "TRANSACTION_READ_COMMITTED" "StockLevelNDHistory" "TRANSACTION_READ_COMMITTED" "NewOrderNDHistory" "TRANSACTION_READ_COMMITTED" "PaymentNDHistory" "TRANSACTION_READ_COMMITTED"
+#executeBenchmark "tpccND" "RC" "OrderStatusNDHistory" "TRANSACTION_READ_COMMITTED" "DeliveryNDHistory" "TRANSACTION_READ_COMMITTED" "StockLevelNDHistory" "TRANSACTION_READ_COMMITTED" "NewOrderNDHistory" "TRANSACTION_READ_COMMITTED" "PaymentNDHistory" "TRANSACTION_READ_COMMITTED"
 executeBenchmark "tpcc" "RC" "OrderStatusHistory" "TRANSACTION_READ_COMMITTED" "DeliveryHistory" "TRANSACTION_READ_COMMITTED" "StockLevelHistory" "TRANSACTION_READ_COMMITTED" "NewOrderHistory" "TRANSACTION_READ_COMMITTED" "PaymentHistory" "TRANSACTION_READ_COMMITTED"
 
 #executeBenchmark "twitter" "RC" "GetTweetHistory" "TRANSACTION_READ_COMMITTED" "GetTweetsFromFollowingHistory" "TRANSACTION_READ_COMMITTED" "GetFollowersHistory" "TRANSACTION_READ_COMMITTED" "GetUserTweetsHistory" "TRANSACTION_READ_COMMITTED" "InsertTweetHistory" "TRANSACTION_READ_COMMITTED"

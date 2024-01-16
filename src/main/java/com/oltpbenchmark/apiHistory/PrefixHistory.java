@@ -95,7 +95,7 @@ public class PrefixHistory {
                     var variable = p.getKey();
                     for (var e : t3) {
                         if (!e.isRead()) continue;
-                        var r = (ReadEvent) e;
+                        var r = e.getReadEvent();
                         var w = history.getWro().get(variable).get(r);
                         if(w == null) continue;
                         if(transactions.get(w.getId()).size() <= w.getSo()) continue;

@@ -31,7 +31,7 @@ public class ReadCommitted extends IsolationLevel{
         for(var e: t3){
             if(e.getPo() == r.getPo()) return false;
             if(!e.isRead()) continue;
-            var s = (ReadEvent) e;
+            var s = e.getReadEvent();
             if(h.areSOUWRRelated(t2, s)) return true;
         }
         return false;

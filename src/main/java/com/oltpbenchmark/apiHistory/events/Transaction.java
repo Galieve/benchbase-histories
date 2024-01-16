@@ -63,7 +63,7 @@ public class Transaction implements Iterable<Event>{
         while (reverseIterator.hasPrevious()) {
             var e = reverseIterator.previous();
             if(!e.isWrite()) continue;
-            var w = (WriteEvent) e;
+            var w = e.getWriteEvent();
             var ws = w.getWriteSet().entrySet();
             for(var p : ws){
                 if(writeSet.containsKey(p.getKey())) continue;
@@ -86,5 +86,16 @@ public class Transaction implements Iterable<Event>{
 
     public boolean isAborted() {
         return events.size() > 0 && events.get(events.size() - 1).isAbort();
+    }
+
+    @Override
+    public String toString() {
+        return "Transaction{" +
+               "id=" + id +
+               ", so=" + so +
+               ", events=" + events +
+               ", writeSet=" + writeSet +
+               ", isolationLevel=" + isolationLevel +
+               '}';
     }
 }

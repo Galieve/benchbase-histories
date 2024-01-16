@@ -29,5 +29,11 @@ public class Value {
         fieldNameToValue.put(fieldName, value);
     }
 
-
+    @Override
+    public String toString() {
+        return "Value{" +
+               "variable=" + variable +
+               ", fieldNameToValue=" + fieldNameToValue +
+               '}';
+    }
 }

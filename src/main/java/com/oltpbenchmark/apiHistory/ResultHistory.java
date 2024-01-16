@@ -12,7 +12,7 @@ public class ResultHistory {
     private Long createStartTime;
 
     private Long createEndTime;
-
+    private History history;
 
 
     public ResultHistory(){
@@ -66,5 +66,13 @@ public class ResultHistory {
 
     public void setCreateEndTime(long createEndTime) {
         this.createEndTime = createEndTime;
+    }
+
+    public void setHistory(History h) {
+        this.history = h;
+    }
+
+    public History getHistory() {
+        return history;
     }
 }
