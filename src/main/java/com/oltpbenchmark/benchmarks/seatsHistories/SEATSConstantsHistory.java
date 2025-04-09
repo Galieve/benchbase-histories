@@ -57,8 +57,10 @@ public abstract class SEATSConstantsHistory {
      * NUM_FLIGHTS_PER_DAY = 15000
      * Source: http://www.transtats.bts.gov/DL_SelectFields.asp?Table_ID=236&DB_Short_Name=On-Time
      */
-    public static final int FLIGHTS_PER_DAY_MIN = 1125;
-    public static final int FLIGHTS_PER_DAY_MAX = 1875;
+    //public static final int FLIGHTS_PER_DAY_MIN = 1125;
+    public static final int FLIGHTS_PER_DAY_MIN = 15;
+    //public static final int FLIGHTS_PER_DAY_MAX = 1875;
+    public static final int FLIGHTS_PER_DAY_MAX = 50;
 
     /**
      * Number of seats available per flight
@@ -84,7 +86,8 @@ public abstract class SEATSConstantsHistory {
     /**
      * Default number of customers in the database
      */
-    public static final int CUSTOMERS_COUNT = 100000;
+    //public static final int CUSTOMERS_COUNT = 100000;
+    public static final int CUSTOMERS_COUNT = 100;
 
     /**
      * Max Number of FREQUENT_FLYER records per CUSTOMER
@@ -104,8 +107,8 @@ public abstract class SEATSConstantsHistory {
     // RESERVATION CONSTANTS
     // ----------------------------------------------------------------
 
-    public static final int RESERVATION_PRICE_MIN = 100;
-    public static final int RESERVATION_PRICE_MAX = 1000;
+    public static final int RESERVATION_PRICE_MIN = 10;
+    public static final int RESERVATION_PRICE_MAX = 100;
 
     public static final int MAX_OPEN_SEATS_PER_TXN = 100;
 
@@ -197,11 +200,16 @@ public abstract class SEATSConstantsHistory {
     /**
      * The number of FlightIds we want to keep cached locally at a client
      */
-    public static final int CACHE_LIMIT_FLIGHT_IDS = 10000;
+    //public static final int CACHE_LIMIT_FLIGHT_IDS = 10000;
+    public static final int CACHE_LIMIT_FLIGHT_IDS = 1000;
 
     public static final int CACHE_LIMIT_PENDING_INSERTS = 10000;
+    //public static final int CACHE_LIMIT_PENDING_INSERTS = 10000;
+
     public static final int CACHE_LIMIT_PENDING_UPDATES = 5000;
+    //public static final int CACHE_LIMIT_PENDING_UPDATES = 5000;
     public static final int CACHE_LIMIT_PENDING_DELETES = 5000;
+    //public static final int CACHE_LIMIT_PENDING_DELETES = 5000;
 
     // ----------------------------------------------------------------
     // DATA SET INFORMATION

@@ -62,10 +62,9 @@ public class OpenOrderHistory extends Oorder  implements PojoHistory {
         );
     }
 
-    @Override
     public Set<String> getTableNames() {
         if(table == null){
-            table = new HashSet<>(Collections.singleton("OpenOrder"));
+            table = new HashSet<>(Collections.singleton(this.getClass().getName()));
         }
         return table;
     }

@@ -22,10 +22,8 @@ import com.oltpbenchmark.api.BenchmarkModule;
 import com.oltpbenchmark.api.TransactionType;
 import com.oltpbenchmark.api.TransactionTypes;
 import com.oltpbenchmark.api.Worker;
-import com.oltpbenchmark.apiHistory.BenchmarkModuleHistory;
-import com.oltpbenchmark.apiHistory.History;
-import com.oltpbenchmark.apiHistory.ResultHistory;
-import com.oltpbenchmark.apiHistory.WorkerHistory;
+import com.oltpbenchmark.apiHistory.*;
+import com.oltpbenchmark.apiHistory.algorithms.*;
 import com.oltpbenchmark.apiHistory.events.Transaction;
 import com.oltpbenchmark.apiHistory.isolationLevels.IsolationLevel;
 import com.oltpbenchmark.types.DatabaseType;
@@ -127,7 +125,7 @@ public class DBWorkloadHistory extends DBWorkload{
             wrkld.setPassword(xmlConfig.getString("password"));
             wrkld.setRandomSeed(xmlConfig.getInt("randomSeed", -1));
             wrkld.setBatchSize(xmlConfig.getInt("batchsize", 128));
-            wrkld.setMaxRetries(xmlConfig.getInt("retries", 3));
+            wrkld.setMaxRetries(xmlConfig.getInt("retries", Integer.MAX_VALUE));
             wrkld.setNewConnectionPerTxn(xmlConfig.getBoolean("newConnectionPerTxn", false));
 
             int terminals = xmlConfig.getInt("terminals[not(@bench)]", 0);
@@ -460,7 +458,7 @@ public class DBWorkloadHistory extends DBWorkload{
         // Execute Loader
         ArrayList<Transaction> initTransactions = new ArrayList<>();
         //Dummy transaction containing (after execution) all rows not loaded.
-        initTransactions.add(new Transaction(new ArrayList<>(), 0, 0, IsolationLevel.get(Connection.TRANSACTION_SERIALIZABLE)));
+        initTransactions.add(new Transaction(new ArrayList<>(), 0, 0, IsolationLevel.get(Connection.TRANSACTION_SERIALIZABLE), "init"));
 
         if (isBooleanOptionSet(argsLine, "load")) {
             try {
@@ -501,10 +499,21 @@ public class DBWorkloadHistory extends DBWorkload{
                 if(r.getRetry().getSampleCount() == 0 && r.getError().getSampleCount() == 0 && r.getRetryDifferent().getSampleCount() == 0 && r.getUnknown().getSampleCount() == 0) {
 
                 }
-                */
 
-                var results = evaluateHistory(transactions, argsLine);
-                writeOutputHistory(results, argsLine);
+                 */
+
+
+                var checkerOpt = argsLine.getOptionValue("ch").trim().split(",");
+                for(var opt : checkerOpt){
+                    opt = opt.trim();
+                    LOG.info("Evaluating history with algorithm "+ opt + "...");
+                    var checker = ConsistencyCheckerFactory.getChecker(opt);
+                    var results = evaluateHistory(transactions, checker, argsLine);
+                    writeOutputHistory(results, opt, argsLine);
+
+                }
+
+
 
             } catch (Throwable ex) {
                 LOG.error("Unexpected error when executing benchmarks.", ex);
@@ -555,9 +564,34 @@ public class DBWorkloadHistory extends DBWorkload{
         return r;
     }
 
-    private static ResultHistory evaluateHistory(ArrayList<ArrayList<Transaction>> transactions, CommandLine argsLine){
 
+    private static History getHistory(ArrayList<ArrayList<Transaction>> transactions, CommandLine argsLine){
+        /*if(argsLine.hasOption("kv")){
+            return new FullHistory(transactions);
+        }
+        else
+         */
 
+        var h = new History(transactions);
+        if(argsLine.hasOption("di")){
+            var ops = argsLine.getOptionValue("di").split(" ");
+            var maps = new HashMap<String, String>();
+            for(int i = 0; i < ops.length; i+=2){
+                maps.put(ops[i], ops[i+1]);
+            }
+            for(var t : h.getTranslator().keySet()){
+                if(maps.containsKey(t.getName())){
+                    t.setIsolationLevel(IsolationLevel.get(maps.get(t.getName())));
+                }
+
+            }
+        }
+        return h;
+    }
+
+    private static ResultHistory evaluateHistory(ArrayList<ArrayList<Transaction>> transactions,
+                                                 ConsistencyChecker checker,
+                                                 CommandLine argsLine){
         var r = new ResultHistory();
         long time = 60;
         r.setTimeout(false);
@@ -572,30 +606,32 @@ public class DBWorkloadHistory extends DBWorkload{
             LOG.info("Creating history...");
 
             r.setCreateStartTime(System.nanoTime());
-            History h = new History(transactions);
+            History h = getHistory(transactions, argsLine);
             r.setHistory(h);
             r.setCreateEndTime(System.nanoTime());
 
-            LOG.info("Evaluating history...");
-
             r.setEvalStartTime(System.nanoTime());
-            var ret = h.checkSOBound(r);
-            r.setConsistent(ret);
+            r.setConsistent(checker.checkConsistency(h, r));
             r.setEvalEndTime(System.nanoTime());
-            return ret;
+            return r.getConsistent();
         };
 
         Future<Object> future = executor.submit(task);
         try {
+            //task.call();
             Object result = future.get(time, TimeUnit.SECONDS);
-        } catch (TimeoutException ex) {
-            r.setTimeout(true);
-            // handle the timeout
         } catch (InterruptedException e) {
             r.setTimeout(true);
             // handle the interrupts
-        } catch (ExecutionException e) {
+        } catch (TimeoutException ex) {
+            r.setTimeout(true);
+            // handle the timeout
+        } catch (ExecutionException | NullPointerException e) {
+            LOG.error("Execution exception throw " + e);
+            e.printStackTrace();
             // handle other exceptions
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         } finally {
             if(r.getCreateStartTime() == null){
                 r.setCreateStartTime(System.nanoTime());
@@ -613,21 +649,24 @@ public class DBWorkloadHistory extends DBWorkload{
             executor.shutdown();
         }
 
-        if(r.getConsistent() == null){
+        if(r.isTimeout()){
             LOG.info("The procedure timeout!");
         }
-        else if(r.getConsistent()){
+        if(r.getConsistent() != null && r.getConsistent()){
             LOG.info("The history is consistent");
         }
-        else{
+        else if(r.getConsistent() != null && !r.getConsistent()){
             LOG.info("The history is NOT consistent!");
+        }
+        else if(!r.isTimeout()){
+            LOG.info("Result not saved!");
         }
         return r;
 
     }
 
 
-    private static void writeOutputHistory(ResultHistory r, CommandLine argsLine) throws Exception {
+    private static void writeOutputHistory(ResultHistory r, String checkerName, CommandLine argsLine) throws Exception {
 
         // If an output directory is used, store the information
         String outputDirectory = "results";
@@ -642,7 +681,7 @@ public class DBWorkloadHistory extends DBWorkload{
 
         String baseFileName = name + "_" + TimeUtil.getCurrentTimeString();
 
-        String summaryFileName = baseFileName + ".histories.csv";
+        String summaryFileName = baseFileName + "-" + checkerName +".histories.csv";
 
         var timeC = r.getCreateEndTime() - r.getCreateStartTime();
         var timeE = r.getEvalEndTime() - r.getEvalStartTime();
@@ -664,15 +703,15 @@ public class DBWorkloadHistory extends DBWorkload{
 
             var cons = r.getConsistent() == null ? "Unknown" : r.getConsistent();
 
-            ps.println("Creation Time (ms), Evaluation Time (ms), Time (ms), Timeout, Consistent, Sizes, Total Size, Extra Variables");
-            ps.println(timeCMS + ", " + timeEMS + ", " + (timeCMS + timeEMS) + ", " + r.isTimeout() + ", " + cons + ", " + sizes + ", " + totalSize + ", " + extraVariables);
+            ps.println("Creation Time (ms); Evaluation Time (ms); Time (ms); Timeout; Consistent; Sizes; Total Size; Extra Variables");
+            ps.println(timeCMS + "; " + timeEMS + "; " + (timeCMS + timeEMS) + "; " + r.isTimeout() + "; " + cons + "; " + sizes + "; " + totalSize + "; " + extraVariables);
         }
 
     }
 
     protected static Options buildOptions(XMLConfiguration pluginConfig) {
         Options options = DBWorkload.buildOptions(pluginConfig);
-        options.addOption("t", "time-histories", true, "Set evaluation time limit");
+        options.addOption("t", "time-histories", true, "Set evaluation time limit (s)");
         options.addOption("b", "bench", true, "[required] Benchmark class. Currently supported: " + pluginConfig.getList("/plugin//@name"));
         options.addOption("c", "config", true, "[required] Workload configuration file");
         options.addOption(null, "create", true, "Initialize the database for this benchmark");
@@ -683,6 +722,9 @@ public class DBWorkloadHistory extends DBWorkload{
         options.addOption("s", "sample", true, "Sampling window");
         options.addOption("im", "interval-monitor", true, "Throughput Monitoring Interval in milliseconds");
         options.addOption("d", "directory", true, "Base directory for the result files, default is current directory");
+        options.addOption("kv", "keyvalue", false, "Key value store history");
+        options.addOption("ch", "checker", true, "Select algorithm for checking consistency. Currently supported: \"CSOB\" and \"Naive\"");
+        options.addOption("di", "isolation-check", true, "Modify consistency of some transaction types under a different isolation level");
         options.addOption(null, "dialects-export", true, "Export benchmark SQL to a dialects file");
         options.addOption("jh", "json-histograms", true, "Export histograms to JSON file");
         return options;

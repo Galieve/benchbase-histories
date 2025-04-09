@@ -133,7 +133,7 @@ public class Flight implements PojoHistory {
     @Override
     public Set<String> getTableNames() {
         if(table == null){
-            table = new HashSet<>(Collections.singleton(SEATSConstantsHistory.TABLENAME_FLIGHT));
+            table = new HashSet<>(Collections.singleton(this.getClass().getName()));
         }
         return table;
     }

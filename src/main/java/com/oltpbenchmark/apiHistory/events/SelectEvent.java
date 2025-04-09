@@ -12,6 +12,10 @@ public class SelectEvent extends Event {
 
     }
 
+    protected SelectEvent(SelectEvent e) {
+        super(e);
+    }
+
     @Override
     public boolean isRead() {
         return true;
@@ -20,5 +24,10 @@ public class SelectEvent extends Event {
     @Override
     public boolean isWrite() {
         return false;
+    }
+
+    @Override
+    public Event cloneEvent() {
+        return new SelectEvent(this);
     }
 }

@@ -17,7 +17,9 @@ public class ReadEvent{
     }
 
     public boolean satisfyWhere(Value value){
-        return wherePredicate.apply(value);
+        return value != null &&
+               parent.belongsInTable(value.getVariable()) &&
+               wherePredicate.apply(value);
     }
 
     public EventID readsVariable(Variable variable){
@@ -37,6 +39,7 @@ public class ReadEvent{
             else first = false;
             sb.append("\t").append(wro.getKey()).append(": ").append(wro.getValue());
         }
+        sb.append("Where: ").append(wherePredicate.toString());
 
         return sb.toString();
     }
@@ -53,5 +56,9 @@ public class ReadEvent{
 
     public final int getPo() {
         return parent.getPo();
+    }
+
+    public Function<Value, Boolean> getWherePredicate() {
+        return wherePredicate;
     }
 }

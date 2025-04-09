@@ -19,6 +19,7 @@ package com.oltpbenchmark.benchmarks.seatsHistories.procedures;
 
 import com.oltpbenchmark.api.Procedure;
 import com.oltpbenchmark.api.SQLStmt;
+import com.oltpbenchmark.apiHistory.ProcedureHistory;
 import com.oltpbenchmark.apiHistory.events.Event;
 import com.oltpbenchmark.apiHistory.events.SelectEvent;
 import com.oltpbenchmark.apiHistory.events.Value;
@@ -34,7 +35,7 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.function.Function;
 
-public class LoadConfigHistory extends Procedure {
+public class LoadConfigHistory extends ProcedureHistory {
 
     // -----------------------------------------------------------------
     // STATEMENTS
@@ -62,7 +63,7 @@ public class LoadConfigHistory extends Procedure {
     );
 
     public final SQLStmt getFlights = new SQLStmt(
-            "SELECT f_id FROM " + SEATSConstantsHistory.TABLENAME_FLIGHT +
+            "SELECT * FROM " + SEATSConstantsHistory.TABLENAME_FLIGHT +
             " ORDER BY F_DEPART_TIME DESC "
     );
 
@@ -99,7 +100,7 @@ public class LoadConfigHistory extends Procedure {
         List<Object[]> countryCodes;
         try (PreparedStatement preparedStatement = this.getPreparedStatement(conn, getCountryCodes)) {
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                var columnNames = Set.of("CO_ID", "CO_CODE_3");
+                var columnNames = List.of("CO_ID", "CO_CODE_3");
                 countryCodes = SQLUtilHistory.toList(resultSet, columnNames);
 
                 Function<Value, Boolean> where = Objects::nonNull;
@@ -115,7 +116,7 @@ public class LoadConfigHistory extends Procedure {
         try (PreparedStatement preparedStatement = this.getPreparedStatement(conn, getAirportCodes)) {
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
 
-                var columnNames = Set.of("AP_ID", "AP_CODE");
+                var columnNames = List.of("AP_ID", "AP_CODE");
                 airportCodes = SQLUtilHistory.toList(resultSet, columnNames);
 
                 Function<Value, Boolean> where = Objects::nonNull;
@@ -129,7 +130,7 @@ public class LoadConfigHistory extends Procedure {
         List<Object[]> airlineCodes;
         try (PreparedStatement preparedStatement = this.getPreparedStatement(conn, getAirlineCodes)) {
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                var columnNames = Set.of("AL_ID", "AL_IATA_CODE");
+                var columnNames = List.of("AL_ID", "AL_IATA_CODE");
                 airlineCodes = SQLUtilHistory.toList(resultSet, columnNames);
 
                 Function<Value, Boolean> where = (val) ->
@@ -146,7 +147,7 @@ public class LoadConfigHistory extends Procedure {
         List<Object[]> flights;
         try (PreparedStatement preparedStatement = this.getPreparedStatement(conn, getFlights)) {
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                var columnNames = Set.of("F_ID");
+                var columnNames = List.of("F_ID");
                 flights = SQLUtilHistory.toList(resultSet, columnNames);
 
                 Function<Value, Boolean> where = Objects::nonNull;

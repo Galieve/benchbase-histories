@@ -66,10 +66,9 @@ public class DistrictHistory extends District implements PojoHistory {
         );
     }
 
-    @Override
     public Set<String> getTableNames() {
         if(table == null){
-            table = new HashSet<>(Collections.singleton("District"));
+            table = new HashSet<>(Collections.singleton(this.getClass().getName()));
         }
         return table;
     }

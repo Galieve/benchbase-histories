@@ -55,7 +55,7 @@ public class SEATSBenchmarkHistory extends BenchmarkModuleHistory {
     @Override
     protected List<Worker<? extends BenchmarkModule>> makeWorkersImpl() {
         List<Worker<? extends BenchmarkModule>> workers = new ArrayList<>();
-        for (int i = 0; i < this.workConf.getTerminals(); ++i) {
+        for (int i = 1; i <= this.workConf.getTerminals(); ++i) {
             workers.add(new SEATSWorkerHistory(this, i));
         }
         return (workers);

@@ -12,6 +12,10 @@ public class UpdateEvent extends Event{
         this.we = new WriteEvent(this, writeSet);
     }
 
+    protected UpdateEvent(UpdateEvent e) {
+        super(e);
+    }
+
     @Override
     public boolean isRead() {
         return true;
@@ -20,5 +24,18 @@ public class UpdateEvent extends Event{
     @Override
     public boolean isWrite() {
         return true;
+    }
+
+    @Override
+    public Event cloneEvent() {
+        return new UpdateEvent(this);
+    }
+
+    public SelectEvent toSelect(){
+        return new SelectEvent( id, so, po, re.getWroInverse(), re.getWherePredicate() , tableNames);
+    }
+
+    public InsertEvent toInsert(){
+        return new InsertEvent(id, so, po,we.getWriteSet(), tableNames);
     }
 }

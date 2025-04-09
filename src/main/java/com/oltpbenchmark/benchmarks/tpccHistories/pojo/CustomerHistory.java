@@ -86,10 +86,9 @@ public class CustomerHistory extends Customer implements PojoHistory {
         );
     }
 
-    @Override
     public Set<String> getTableNames() {
         if(table == null){
-            table = new HashSet<>(Collections.singleton("Customer"));
+            table = new HashSet<>(Collections.singleton(this.getClass().getName()));
         }
         return table;
     }

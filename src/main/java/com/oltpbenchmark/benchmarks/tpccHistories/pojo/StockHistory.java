@@ -72,10 +72,9 @@ public class StockHistory extends Stock implements PojoHistory{
         );
     }
 
-    @Override
     public Set<String> getTableNames() {
         if(table == null){
-            table = new HashSet<>(Collections.singleton("Stock"));
+            table = new HashSet<>(Collections.singleton(this.getClass().getName()));
         }
         return table;
     }

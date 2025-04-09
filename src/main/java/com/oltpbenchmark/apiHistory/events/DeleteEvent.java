@@ -13,6 +13,10 @@ public class DeleteEvent extends Event{
         this.we = new WriteEvent(this, writeSet);
     }
 
+    protected DeleteEvent(DeleteEvent e){
+        super(e);
+    }
+
     @Override
     public boolean isRead() {
         return true;
@@ -21,5 +25,10 @@ public class DeleteEvent extends Event{
     @Override
     public boolean isWrite() {
         return true;
+    }
+
+    @Override
+    public Event cloneEvent() {
+        return new DeleteEvent(this);
     }
 }

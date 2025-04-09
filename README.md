@@ -1,287 +1,120 @@
-# BenchBase
-
-[![BenchBase (Java with Maven)](https://github.com/cmu-db/benchbase/actions/workflows/maven.yml/badge.svg?branch=main)](https://github.com/cmu-db/benchbase/actions/workflows/maven.yml)
-
-BenchBase (formerly [OLTPBench](https://github.com/oltpbenchmark/oltpbench/)) is a Multi-DBMS SQL Benchmarking Framework via JDBC.
-
-**Table of Contents**
-
-- [Quickstart](#quickstart)
-- [Description](#description)
-- [Usage Guide](#usage-guide)
-- [Contributing](#contributing)
-- [Known Issues](#known-issues)
-- [Credits](#credits)
-- [Citing This Repository](#citing-this-repository)
+# Checking SO-Bounded Database executions Artifact
+## Getting started
 
 ---
 
-## Quickstart
+This repository contains the software artifact that supports the CAV'25 submission on "_On the Complexity of Checking Mixed Isolation Levels for SQL Transactions_". Checking SO-Bounded database executions (CSOB) is an extension of [`BenchBase`](BenchBase-README.md) capable to test whether a database isolation level implementation conforms with respect to their specifications.
 
-To clone and build BenchBase using the `postgres` profile,
+Our artifact is split into different parts following the architecture of BenchBase. The main ones include:
 
-```bash
-git clone --depth 1 https://github.com/cmu-db/benchbase.git
-cd benchbase
-./mvnw clean package -P postgres
-```
+- The directory [`src/main`](src/main/README.md) contains the main source code, including JPF and TrJPF.
+- The directory [`src/examples`](src/examples/README.md) contains both the API database along with the source code that describe the benchmarks in section 7.2 (Courseware, ShoppingCart, TPC-C, Twitter and Wikipedia).
+- The directory [`src/benchmarks`](src/benchmarks/README.md) contains the parameters that define clients tested in section 7.3 and the initial state of the database in each execution. Clients are instantiation of code from examples directory according to adequate parameters.
+- The directory [`bin/benchmarks`](bin/benchmarks/README.md) will contain the output files after each execution.
+- Configuration file [`jpf.properties`](jpf.properties), including the isolation levels, search mode, output configuration, client APIs to take into account, etc... Configuration parameters can be modified
 
-This produces artifacts in the `target` folder, which can be extracted,
 
-```bash
-cd target
-tar xvzf benchbase-postgres.tgz
-cd benchbase-postgres
-```
-
-Inside this folder, you can run BenchBase. For example, to execute the `tpcc` benchmark,
-
-```bash
-java -jar benchbase.jar -b tpcc -c config/postgres/sample_tpcc_config.xml --create=true --load=true --execute=true
-```
-
-A full list of options can be displayed,
-
-```bash
-java -jar benchbase.jar -h
-```
+## Build
 
 ---
 
-## Description
+For building, simply run the following:
 
-Benchmarking is incredibly useful, yet endlessly painful. This benchmark suite is the result of a group of
-PhDs/post-docs/professors getting together and combining their workloads/frameworks/experiences/efforts. We hope this
-will save other people's time, and will provide an extensible platform, that can be grown in an open-source fashion.
+```
+docker build -t tr-jpf:latest .
+```
 
-BenchBase is a multi-threaded load generator. The framework is designed to be able to produce variable rate,
-variable mixture load against any JDBC-enabled relational database. The framework also provides data collection
-features, e.g., per-transaction-type latency and throughput logs.
-
-The BenchBase framework has the following benchmarks:
-
-* [AuctionMark](https://github.com/cmu-db/benchbase/wiki/AuctionMark)
-* [CH-benCHmark](https://github.com/cmu-db/benchbase/wiki/CH-benCHmark)
-* [Epinions.com](https://github.com/cmu-db/benchbase/wiki/epinions)
-* hyadapt -- pending configuration files
-* [NoOp](https://github.com/cmu-db/benchbase/wiki/NoOp)
-* [OT-Metrics](https://github.com/cmu-db/benchbase/wiki/OT-Metrics)
-* [Resource Stresser](https://github.com/cmu-db/benchbase/wiki/Resource-Stresser)
-* [SEATS](https://github.com/cmu-db/benchbase/wiki/Seats)
-* [SIBench](https://github.com/cmu-db/benchbase/wiki/SIBench)
-* [SmallBank](https://github.com/cmu-db/benchbase/wiki/SmallBank)
-* [TATP](https://github.com/cmu-db/benchbase/wiki/TATP)
-* [TPC-C](https://github.com/cmu-db/benchbase/wiki/TPC-C)
-* [TPC-H](https://github.com/cmu-db/benchbase/wiki/TPC-H)
-* TPC-DS -- pending configuration files
-* [Twitter](https://github.com/cmu-db/benchbase/wiki/Twitter)
-* [Voter](https://github.com/cmu-db/benchbase/wiki/Voter)
-* [Wikipedia](https://github.com/cmu-db/benchbase/wiki/Wikipedia)
-* [YCSB](https://github.com/cmu-db/benchbase/wiki/YCSB)
-
-This framework is design to allow for easy extension. We provide stub code that a contributor can use to include a new
-benchmark, leveraging all the system features (logging, controlled speed, controlled mixture, etc.)
+## Run
 
 ---
 
-## Usage Guide
+The three experiments in section 7.3 have an associated script. It suffices to run it for obtaining the results. For a detailed description about the design, input or output of the experiments check the links above.
 
-### How to Build
-Run the following command to build the distribution for a given database specified as the profile name (`-P`).  The following profiles are currently supported: `postgres`, `mysql`, `mariadb`, `sqlite`, `cockroachdb`, `phoenix`, and `spanner`.
-
-```bash
-./mvnw clean package -P <profile name>
-```
-
-The following files will be placed in the `./target` folder:
-
-* `benchbase-<profile name>.tgz`
-* `benchbase-<profile name>.zip`
-
-### How to Run
-Once you build and unpack the distribution, you can run `benchbase` just like any other executable jar.  The following examples assume you are running from the root of the expanded `.zip` or `.tgz` distribution.  If you attempt to run `benchbase` outside of the distribution structure you may encounter a variety of errors including `java.lang.NoClassDefFoundError`.
-
-To bring up help contents:
-```bash
-java -jar benchbase.jar -h
-```
-
-To execute the `tpcc` benchmark:
-```bash
-java -jar benchbase.jar -b tpcc -c config/postgres/sample_tpcc_config.xml --create=true --load=true --execute=true
-```
-
-For composite benchmarks like `chbenchmark`, which require multiple schemas to be created and loaded, you can provide a comma separated list:
-```bash
-java -jar benchbase.jar -b tpcc,chbenchmark -c config/postgres/sample_chbenchmark_config.xml --create=true --load=true --execute=true
-```
-
-The following options are provided:
-
-```text
-usage: benchbase
- -b,--bench <arg>               [required] Benchmark class. Currently
-                                supported: [tpcc, tpch, tatp, wikipedia,
-                                resourcestresser, twitter, epinions, ycsb,
-                                seats, auctionmark, chbenchmark, voter,
-                                sibench, noop, smallbank, hyadapt, otmetrics]
- -c,--config <arg>              [required] Workload configuration file
-    --clear <arg>               Clear all records in the database for this
-                                benchmark
-    --create <arg>              Initialize the database for this benchmark
- -d,--directory <arg>           Base directory for the result files,
-                                default is current directory
-    --dialects-export <arg>     Export benchmark SQL to a dialects file
-    --execute <arg>             Execute the benchmark workload
- -h,--help                      Print this help
- -im,--interval-monitor <arg>   Throughput Monitoring Interval in
-                                milliseconds
-    --load <arg>                Load data using the benchmark's data
-                                loader
- -s,--sample <arg>              Sampling window
-```
-
-### How to Run with Maven
-
-Instead of first building, packaging and extracting before running benchbase, it is possible to execute benchmarks directly against the source code using Maven. Once you have the project cloned you can run any benchmark from the root project directory using the Maven `exec:java` goal. For example, the following command executes the `tpcc` benchmark against `postgres`:
+The following command shall be run before executing any experiment. It produces the container where our experiments will be run.
 
 ```
-mvn clean compile exec:java -P postgres -Dexec.args="-b tpcc -c config/postgres/sample_tpcc_config.xml --create=true --load=true --execute=true"
+docker run -it tr-jpf:latest bash
 ```
 
-this is equivalent to the steps above but eliminates the need to first package and then extract the distribution.
+Every experiment produce several short `.out` files. It is recommended to read their content either with cat or copying it to the host machine via [`docker cp`](https://docs.docker.com/engine/reference/commandline/cp/).
 
-### How to Enable Logging
+**Notes**
 
-To enable logging, e.g., for the PostgreSQL JDBC driver, add the following JVM property when starting...
+The time limit set is to 30' per case. It is recommended to be careful when running each script as it may take up to 1 day per script. Some sub-benchmarks are already predefined for having a satisfactory user experience.
 
-```
--Djava.util.logging.config.file=src/main/resources/logging.properties
-```
 
-To modify the logging level you can update [`logging.properties`](src/main/resources/logging.properties) and/or [`log4j.properties`](src/main/resources/log4j.properties).
+### First experiment: application scalability
 
-### How to Release
+The following command shall be run. Its outcome can be found in "bin/benchmarks/application-scalability" folder.
 
 ```
-./mvnw -B release:prepare
-./mvnw -B release:perform
+bash bench-application-scalability.sh
 ```
 
-### How use with Docker
+It will produce 5 folders ("courseware/", "shoppingCart/", "tpcc/", "twitter/" and "wikipedia/"), each with 5 subfolders (one per number of sessions in the benchmark). Each subfolder will contain 7 .out files, one per isolation level treated (Appendix F, Table F1).
 
-- Build or pull a dev image to help building from source:
+#### Demo version
 
-  ```sh
-  ./docker/benchbase/build-dev-image.sh
-  ./docker/benchbase/run-dev-image.sh
-  ```
+One can run the command below to execute a smaller benchmark where only the first two rows of Table F1 are executed. The results of this test case can be found in `bin/benchmarks/demo-application-scalability`.
 
-  or
+```
+bash bench-demo-app.sh
+```
 
-  ```sh
-  docker run -it --rm --pull \
-    -v /path/to/benchbase-source:/benchbase \
-    -v $HOME/.m2:/home/containeruser/.m2 \
-    benchbase.azure.cr.io/benchbase-dev
-  ```
+### Second and third experiment: session and transaction scalability
 
-- Build the full image:
+The following commands shall be run:
 
-  ```sh
-  # build an image with all profiles
-  ./docker/benchbase/build-full-image.sh
+- Second experiment. Its outcome can be found in "bin/benchmarks/session-scalability" folder:
 
-  # or if you only want to build some of them
-  BENCHBASE_PROFILES='postgres mysql' ./docker/benchbase/build-full-image.sh
-  ```
+```
+bash bench-session-scalability.sh
+```
 
-- Run the image for a given profile:
+- Third experiment. Its outcome can be found in "bin/benchmarks/transaction-scalability" folder:
 
-  ```sh
-  BENCHBASE_PROFILE='postgres' ./docker/benchbase/run-full-image.sh --help # or other benchbase args as before
-  ```
+```
+bash bench-transaction-scalability.sh
+```
 
-  or
+Both of them will produce 2 folders ("tpcc/" and "wikipedia/"), each with 5 subfolders (one per study case). Inside them, 5 folders can be found; obtaining in total a system of 50 folders.
+For example, one of those final directories will be `bin/benchmarks/transaction-scalability/tpcc/case1/2-transactions-per-session`.
 
-  ```sh
-  docker run -it --rm --env BENCHBASE_PROFILE='postgres' \
-    -v results:/benchbase/results benchbase.azurecr.io/benchbase --help # or other benchbase args as before
-  ```
+Each final folder will contain 1 .out file, corresponding with a cell in Appendix F, Table F2 or Appendix F, Table F3.
 
-> See the [docker/benchbase/README.md](./docker/benchbase/) for further details.
 
-[Github Codespaces](https://github.com/features/codespaces) and [VSCode devcontainer](https://code.visualstudio.com/docs/remote/containers) support is also available.
+#### Demo version
 
-### How to Add Support for a New Database
+One can run the command below to execute a smaller benchmark where only the first two rows and first three columns of Table F2 (respectively F3) are executed. The results of this test case can be found in `bin/benchmarks/demo-session-scalability` (respectively `bin/benchmarks/demo-transaction-scalability`).
 
-Please see the existing MySQL and PostgreSQL code for an example.
+**Second experiment:**
+```
+bash bench-demo-session.sh
+```
+
+**Third experiment:**
+```
+bash bench-demo-transaction.sh
+```
+
+## Do it yourself!
 
 ---
 
-## Contributing
+If the reader wants to test their own programs, we recommend to read both the [`JPF-README`](JPF-README.md), that explains the usage of JPF, and the [`DIY-README`](DIY-README.md) that summarizes the new features that TrJPF brings.
 
-We welcome all contributions! Please open a pull request. Common contributions may include:
+## Requirements
 
-- Adding support for a new DBMS.
-- Adding more tests of existing benchmarks.
-- Fixing any bugs or known issues.
+---
 
-## Known Issues
+This artifact was tested on a Mac OS. We recommend using a Mac/Linux OS version with updated software.
 
-Please use GitHub's issue tracker for all issues.
+Docker is required. Please install it for your OS. The necessary documentation is available [here](https://docs.docker.com/get-docker).
 
-## Credits
+<!---
+This artifact was tested on a Linux OS. We recommend using a new Unix/Linux OS version with updated software.
 
-BenchBase is the official modernized version of the original OLTPBench.
+Docker is required. Please install it for your OS. The necessary documentation is available [here](https://docs.docker.com/get-docker) and then follow the [post installation steps](https://docs.docker.com/engine/install/linux-postinstall) so that you can run `docker` commands without admin privileges or sudo.
 
-The original OLTPBench code was largely written by the authors of the original paper, [OLTP-Bench: An Extensible Testbed for Benchmarking Relational Databases](http://www.vldb.org/pvldb/vol7/p277-difallah.pdf), D. E. Difallah, A. Pavlo, C. Curino, and P. Cudré-Mauroux. In VLDB 2014. Please see the citation guide below.
+-->
 
-A significant portion of the modernization was contributed by [Tim Veil @ Cockroach Labs](https://github.com/timveil-cockroach), including but not limited to:
-
-* Built with and for Java ~~11~~ 17.
-* Migration from Ant to Maven.
-  * Reorganized project to fit Maven structure.
-  * Removed static `lib` directory and dependencies.
-  * Updated required dependencies and removed unused or unwanted dependencies.
-  * Moved all non `.java` files to standard Maven `resources` directory.
-  * Shipped with [Maven Wrapper](https://maven.apache.org/wrapper).
-* Improved packaging and versioning.
-    * Moved to Calendar Versioning (https://calver.org/).
-    * Project is now distributed as a `.tgz` or `.zip` with an executable `.jar`.
-    * All code updated to read `resources` from inside `.jar` instead of directory.
-* Moved from direct dependence on Log4J to SLF4J.
-* Reorganized and renamed many files for clarity and consistency.
-* Applied countless fixes based on "Static Analysis".
-    * JDK migrations (boxing, un-boxing, etc.).
-    * Implemented `try-with-resources` for all `java.lang.AutoCloseable` instances.
-    * Removed calls to `printStackTrace()` or `System.out.println` in favor of proper logging.
-* Reformatted code and cleaned up imports.
-* Removed all calls to `assert`.
-* Removed various forms of dead code and stale configurations.
-* Removed calls to `commit()` during `Loader` operations.
-* Refactored `Worker` and `Loader` usage of `Connection` objects and cleaned up transaction handling.
-* Introduced [Dependabot](https://dependabot.com/) to keep Maven dependencies up to date.
-* Simplified output flags by removing most of them, generally leaving the reporting functionality enabled by default.
-* Provided an alternate `Catalog` that can be populated directly from the configured Benchmark database. The old catalog was proxied through `HSQLDB` -- this remains an option for DBMSes that may have incomplete catalog support.
-
-## Citing This Repository
-
-If you use this repository in an academic paper, please cite this repository:
-
-> D. E. Difallah, A. Pavlo, C. Curino, and P. Cudré-Mauroux, "OLTP-Bench: An Extensible Testbed for Benchmarking Relational Databases," PVLDB, vol. 7, iss. 4, pp. 277-288, 2013.
-
-The BibTeX is provided below for convenience.
-
-```bibtex
-@article{DifallahPCC13,
-  author = {Djellel Eddine Difallah and Andrew Pavlo and Carlo Curino and Philippe Cudr{\'e}-Mauroux},
-  title = {OLTP-Bench: An Extensible Testbed for Benchmarking Relational Databases},
-  journal = {PVLDB},
-  volume = {7},
-  number = {4},
-  year = {2013},
-  pages = {277--288},
-  url = {http://www.vldb.org/pvldb/vol7/p277-difallah.pdf},
-}
-```

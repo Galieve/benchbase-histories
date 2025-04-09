@@ -65,10 +65,9 @@ public class OrderLineHistory extends OrderLine implements PojoHistory {
         );
     }
 
-    @Override
     public Set<String> getTableNames() {
         if(table == null){
-            table = new HashSet<>(Collections.singleton("OrderLine"));
+            table = new HashSet<>(Collections.singleton(this.getClass().getName()));
         }
         return table;
     }

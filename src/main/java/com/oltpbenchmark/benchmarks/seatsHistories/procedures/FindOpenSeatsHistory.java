@@ -7,7 +7,7 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
+ * Unless required by applicabGetFlightle law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
@@ -42,10 +42,12 @@ package com.oltpbenchmark.benchmarks.seatsHistories.procedures;
 
 import com.oltpbenchmark.api.Procedure;
 import com.oltpbenchmark.api.SQLStmt;
+import com.oltpbenchmark.apiHistory.ProcedureHistory;
 import com.oltpbenchmark.apiHistory.events.Event;
 import com.oltpbenchmark.apiHistory.events.SelectEvent;
 import com.oltpbenchmark.apiHistory.events.Value;
 import com.oltpbenchmark.benchmarks.seatsHistories.SEATSConstantsHistory;
+import com.oltpbenchmark.benchmarks.seatsHistories.pojo.Flight;
 import com.oltpbenchmark.benchmarks.seatsHistories.pojo.Reservation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,19 +59,19 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.function.Function;
 
-public class FindOpenSeatsHistory extends Procedure {
+public class FindOpenSeatsHistory extends ProcedureHistory {
     private static final Logger LOG = LoggerFactory.getLogger(FindOpenSeatsHistory.class);
 
     public final SQLStmt GetFlight = new SQLStmt(
         "SELECT * " +
         "  FROM " + SEATSConstantsHistory.TABLENAME_FLIGHT +
-        " WHERE F_ID = ?"
+        " WHERE F_ID = ? "
     );
 
     public final SQLStmt GetSeats = new SQLStmt(
         "SELECT * " +
         "  FROM " + SEATSConstantsHistory.TABLENAME_RESERVATION +
-        " WHERE R_F_ID = ?"
+        " WHERE R_F_ID = ? "
     );
 
     public Object[][] run(Connection conn, String f_id, ArrayList<Event> events, int id, int so) throws SQLException {
@@ -100,6 +102,7 @@ public class FindOpenSeatsHistory extends Procedure {
         try (PreparedStatement f_stmt = this.getPreparedStatement(conn, GetFlight)) {
             f_stmt.setString(1, f_id);
             try (ResultSet f_results = f_stmt.executeQuery()) {
+
                 if (f_results.next()) {
 
                     // long status = results[0].getLong(0);
@@ -110,6 +113,13 @@ public class FindOpenSeatsHistory extends Procedure {
                 } else {
                     LOG.warn("flight {} had no seats; this may be a data problem or a code problem.  previously this threw an unhandled exception.", f_id);
                 }
+
+                Function<Value, Boolean> where = (val) ->
+                    val != null &&
+                    val.getValue("F_ID").equals(f_id);
+                var f = new Flight();
+                var wro = f.getSelectEventInfo(f_results);
+                events.add(new SelectEvent(id, so, po, wro, where, f.getTableNames()));
             }
         }
 

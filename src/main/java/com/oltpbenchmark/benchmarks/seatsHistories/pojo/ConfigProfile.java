@@ -85,11 +85,10 @@ public class ConfigProfile implements PojoHistory {
             new Pair<>("STRING", "WRITEID")
         );
     }
-
     @Override
     public Set<String> getTableNames() {
         if(table == null){
-            table = new HashSet<>(Collections.singleton(SEATSConstantsHistory.TABLENAME_CONFIG_PROFILE));
+            table = new HashSet<>(Collections.singleton(this.getClass().getName()));
         }
         return table;
     }

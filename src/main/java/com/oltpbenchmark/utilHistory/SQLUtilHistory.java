@@ -11,16 +11,20 @@ import java.util.Set;
 
 public abstract class SQLUtilHistory extends SQLUtil {
 
-    public static List<Object[]> toList(ResultSet rs, Set<String> columnNames) throws SQLException {
+    public static List<Object[]> toList(ResultSet rs, List<String> columnNames) throws SQLException {
         ResultSetMetaData rs_md = rs.getMetaData();
         int num_cols = rs_md.getColumnCount();
 
         List<Object[]> results = new ArrayList<>();
         while (rs.next()) {
-            Object[] row = new Object[num_cols];
+            Object[] row = new Object[columnNames.size()];
             for (int i = 0; i < num_cols; i++) {
-                if(columnNames.contains(rs_md.getColumnName(i)))
-                    row[i] = rs.getObject(i + 1);
+                for(int j = 0; j < columnNames.size(); ++j){
+                    if(columnNames.get(j).equalsIgnoreCase(rs_md.getColumnName(i + 1))){
+                        row[j] = rs.getObject(i + 1);
+                        break;
+                    }
+                }
             }
             results.add(row);
         }

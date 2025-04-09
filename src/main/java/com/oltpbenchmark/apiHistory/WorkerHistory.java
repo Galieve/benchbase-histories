@@ -11,7 +11,6 @@ import com.oltpbenchmark.apiHistory.events.AbortEvent;
 import com.oltpbenchmark.apiHistory.events.Event;
 import com.oltpbenchmark.apiHistory.events.Transaction;
 import com.oltpbenchmark.apiHistory.isolationLevels.IsolationLevel;
-import com.oltpbenchmark.apiHistory.isolationLevels.Serializabilty;
 import com.oltpbenchmark.types.DatabaseType;
 import com.oltpbenchmark.types.State;
 import com.oltpbenchmark.types.TransactionStatus;
@@ -53,7 +52,7 @@ public abstract class WorkerHistory<T extends BenchmarkModule> extends Worker<T>
 
 
     @Override
-    protected final void initialize() {
+    protected void initialize() {
 
     }
 
@@ -74,11 +73,11 @@ public abstract class WorkerHistory<T extends BenchmarkModule> extends Worker<T>
         try {
             int retryCount = 0;
             int maxRetryCount = configuration.getMaxRetries();
+            boolean done = false;
 
-            while (retryCount < maxRetryCount && this.workloadState.getGlobalState() != State.DONE) {
-
+            //retryCount < maxRetryCount && this.workloadState.getGlobalState() != State.DONE
+            while (retryCount < maxRetryCount && !done) {
                 TransactionStatus status = TransactionStatus.UNKNOWN;
-
                 if (this.conn == null) {
                     try {
                         this.conn = this.benchmark.makeConnection();
@@ -124,16 +123,18 @@ public abstract class WorkerHistory<T extends BenchmarkModule> extends Worker<T>
                     }
 
                     conn.commit();
-                    transactions.add(new Transaction(events, this.getId(), transactions.size(), iso));
+                    if(this.workloadState.getGlobalState() != State.DONE) {
+                        transactions.add(new Transaction(events, this.getId(), transactions.size(), iso, transactionType.getName()));
+                    }
 
                     conn.setTransactionIsolation(connIso);
-
+                    done = true;
                     break;
 
                 } catch (Procedure.UserAbortException ex) {
                     conn.rollback();
                     events.add(new AbortEvent(this.getId(), transactions.size(), events.size()));
-                    transactions.add(new Transaction(events, this.getId(), transactions.size(), iso));
+                    transactions.add(new Transaction(events, this.getId(), transactions.size(), iso, transactionType.getName()));
 
                     conn.setTransactionIsolation(connIso);
 

@@ -42,9 +42,12 @@ package com.oltpbenchmark.benchmarks.seatsHistories.procedures;
 
 import com.oltpbenchmark.api.Procedure;
 import com.oltpbenchmark.api.SQLStmt;
-import com.oltpbenchmark.apiHistory.events.Event;
+import com.oltpbenchmark.apiHistory.ProcedureHistory;
+import com.oltpbenchmark.apiHistory.events.*;
 import com.oltpbenchmark.benchmarks.seats.util.ErrorType;
 import com.oltpbenchmark.benchmarks.seatsHistories.SEATSConstantsHistory;
+import com.oltpbenchmark.benchmarks.seatsHistories.pojo.Reservation;
+import com.oltpbenchmark.utilHistory.SQLUtilHistory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,23 +56,32 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.function.Function;
 
-public class UpdateReservationHistory extends Procedure {
+public class UpdateReservationHistory extends ProcedureHistory {
     private static final Logger LOG = LoggerFactory.getLogger(UpdateReservationHistory.class);
 
     public final SQLStmt CheckSeat = new SQLStmt(
-            "SELECT R_ID " +
+            "SELECT * " +
             "  FROM " + SEATSConstantsHistory.TABLENAME_RESERVATION +
             " WHERE R_F_ID = ? and R_SEAT = ?");
 
     public final SQLStmt CheckCustomer = new SQLStmt(
-            "SELECT R_ID " +
+            "SELECT * " +
             "  FROM " + SEATSConstantsHistory.TABLENAME_RESERVATION +
             " WHERE R_F_ID = ? AND R_C_ID = ?");
 
-    private static final String BASE_SQL = "UPDATE " + SEATSConstantsHistory.TABLENAME_RESERVATION +
-                                           "   SET R_SEAT = ?, %s = ? " +
-                                           " WHERE R_ID = ? AND R_C_ID = ? AND R_F_ID = ?";
+    private static final String BASE_SQL =
+        "UPDATE " +
+        SEATSConstantsHistory.TABLENAME_RESERVATION +
+        "   SET R_SEAT = ?, " +
+        "       %s = ?, " +
+        "       WRITEID = CONCAT(?, ';', SPLIT_PART(WRITEID, ';', 1))" +
+        " WHERE R_ID = ? " +
+        "    AND R_C_ID = ?" +
+        "    AND R_F_ID = ?" +
+        " RETURNING *"
+        ;
 
     public final SQLStmt ReserveSeat0 = new SQLStmt(String.format(BASE_SQL, "R_IATTR00"));
     public final SQLStmt ReserveSeat1 = new SQLStmt(String.format(BASE_SQL, "R_IATTR01"));
@@ -87,13 +99,23 @@ public class UpdateReservationHistory extends Procedure {
     public void run(Connection conn, long r_id, String f_id, String c_id, long seatnum, long attr_idx, long attr_val, ArrayList<Event> events, int id, int so) throws SQLException {
 
         boolean found;
+        int po = 0;
 
         // Check if Seat is Available
         try (PreparedStatement stmt = this.getPreparedStatement(conn, CheckSeat, f_id, seatnum)) {
             try (ResultSet results = stmt.executeQuery()) {
                 found = results.next();
+                Function<Value, Boolean> where = (val) ->
+                    val != null &&
+                    val.getValue("R_F_ID").equals(f_id) &&
+                    Long.parseLong(val.getValue("R_SEAT")) == seatnum;
+
+                var r = new Reservation();
+                var wro = r.getSelectEventInfo(results);
+                events.add(new SelectEvent(id, so, po, wro, where, r.getTableNames()));
             }
         }
+        ++po;
 
         if (found) {
             LOG.debug("Error Type [{}]: Seat {} is already reserved on flight {}", ErrorType.SEAT_ALREADY_RESERVED, seatnum, f_id);
@@ -104,8 +126,17 @@ public class UpdateReservationHistory extends Procedure {
         try (PreparedStatement stmt = this.getPreparedStatement(conn, CheckCustomer, f_id, c_id)) {
             try (ResultSet results = stmt.executeQuery()) {
                 found = results.next();
+                Function<Value, Boolean> where = (val) ->
+                    val != null &&
+                    val.getValue("R_F_ID").equals(f_id) &&
+                    val.getValue("R_C_ID").equals(c_id);
+
+                var r = new Reservation();
+                var wro = r.getSelectEventInfo(results);
+                events.add(new SelectEvent(id, so, po, wro, where, r.getTableNames()));
             }
         }
+        ++po;
 
         if (!found) {
             LOG.debug("Error Type [{}]: Customer {} does not have an existing reservation on flight {}", ErrorType.CUSTOMER_ALREADY_HAS_SEAT, c_id, f_id);
@@ -114,9 +145,23 @@ public class UpdateReservationHistory extends Procedure {
 
         // Update the seat reservation for the customer
         int updated;
-        try (PreparedStatement stmt = this.getPreparedStatement(conn, ReserveSeats[(int) attr_idx], seatnum, attr_val, r_id, c_id, f_id)) {
-            updated = stmt.executeUpdate();
+        var evID = EventID.generateID(id, so, po);
+        try (PreparedStatement stmt = this.getPreparedStatement(conn, ReserveSeats[(int) attr_idx], seatnum, attr_val, evID, r_id, c_id, f_id)) {
+            stmt.execute();
+            var rs = stmt.getResultSet();
+            updated = SQLUtilHistory.size(rs);
+            Function<Value, Boolean> where = (val) ->
+                val != null &&
+                Long.parseLong(val.getValue("R_ID")) == r_id &&
+                val.getValue("R_F_ID").equals(f_id) &&
+                val.getValue("R_C_ID").equals(c_id);
+
+            var r = new Reservation();
+            var p = r.getUpdateEventInfo(rs);
+            events.add(new UpdateEvent(id, so, po, p.first, p.second, where, r.getTableNames()));
+
         }
+        ++po;
 
         if (updated != 1) {
             throw new UserAbortException(String.format("Error Type [%s]: Failed to update reservation on flight %s for customer #%s - Updated %d records", ErrorType.VALIDITY_ERROR, f_id, c_id, updated));

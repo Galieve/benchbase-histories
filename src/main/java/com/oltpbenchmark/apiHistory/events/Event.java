@@ -32,6 +32,17 @@ public abstract class Event implements EventInterface {
         this.we = null;
     }
 
+    protected Event(Event e){
+        this.id = e.id;
+        this.so = e.so;
+        this.po = e.po;
+        this.eventID = e.eventID;
+        this.eventType = e.eventType;
+        this.tableNames = e.tableNames;
+        this.re = e.re;
+        this.we = e.we;
+    }
+
     public final Integer getId() {
         return id;
     }
@@ -50,7 +61,7 @@ public abstract class Event implements EventInterface {
 
     public boolean belongsInTable(Variable variable) {
         for(var t: tableNames){
-            if(variable.getStringName().contains(t)){
+            if(variable.getStringName().contains(t + ",")){
                 return true;
             }
         }
@@ -84,4 +95,5 @@ public abstract class Event implements EventInterface {
     public WriteEvent getWriteEvent() {
         return we;
     }
+
 }

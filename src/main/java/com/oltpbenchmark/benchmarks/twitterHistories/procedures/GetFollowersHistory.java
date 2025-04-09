@@ -70,7 +70,7 @@ public class GetFollowersHistory extends ProcedureHistory {
 
                     rs.beforeFirst();
                     while (rs.next() && ctr++ < TwitterConstantsHistory.LIMIT_FOLLOWERS) {
-                        last = rs.getLong(1);
+                        last = rs.getLong("F2");
                         getFollowerNamesstmt.setLong(ctr, last);
                         followers.add(last);
                     }

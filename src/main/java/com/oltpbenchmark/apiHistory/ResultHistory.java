@@ -17,6 +17,7 @@ public class ResultHistory {
 
     public ResultHistory(){
         consistent = null;
+        timeout = false;
     }
 
 

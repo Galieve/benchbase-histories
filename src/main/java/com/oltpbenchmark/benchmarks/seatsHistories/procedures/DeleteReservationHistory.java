@@ -20,6 +20,7 @@ package com.oltpbenchmark.benchmarks.seatsHistories.procedures;
 
 import com.oltpbenchmark.api.Procedure;
 import com.oltpbenchmark.api.SQLStmt;
+import com.oltpbenchmark.apiHistory.ProcedureHistory;
 import com.oltpbenchmark.apiHistory.events.*;
 import com.oltpbenchmark.benchmarks.seatsHistories.SEATSConstantsHistory;
 import com.oltpbenchmark.benchmarks.seatsHistories.pojo.Customer;
@@ -39,7 +40,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.function.Function;
 
-public class DeleteReservationHistory extends Procedure {
+public class DeleteReservationHistory extends ProcedureHistory {
     private static final Logger LOG = LoggerFactory.getLogger(DeleteReservationHistory.class);
 
     public final SQLStmt GetCustomerByIdStr = new SQLStmt(
@@ -95,14 +96,18 @@ public class DeleteReservationHistory extends Procedure {
             "       C_IATTR10 = C_IATTR10 - 1, " +
             "       C_IATTR11 = C_IATTR10 - 1, " +
             "       WRITEID = CONCAT(?, ';', SPLIT_PART(WRITEID, ';', 1))" +
-            " WHERE C_ID = ? ");
+            " WHERE C_ID = ? " +
+            " RETURNING *"
+    );
 
     public final SQLStmt UpdateFrequentFlyer = new SQLStmt(
             "UPDATE " + SEATSConstantsHistory.TABLENAME_FREQUENT_FLYER +
             "   SET FF_IATTR10 = FF_IATTR10 - 1, " +
             "       WRITEID = CONCAT(?, ';', SPLIT_PART(WRITEID, ';', 1))" +
             " WHERE FF_C_ID = ?" +
-            "   AND FF_AL_ID = ?");
+            "   AND FF_AL_ID = ?" +
+            " RETURNING *"
+    );
 
     public void run(Connection conn, String f_id, String c_id, String c_id_str, String ff_c_id_str, Long ff_al_id, ArrayList<Event> events, int id, int so) throws SQLException {
 
@@ -184,7 +189,7 @@ public class DeleteReservationHistory extends Procedure {
             var rs = stmt.getResultSet();
             Function<Value, Boolean> where = (val) ->
                 val != null &&
-                val.getValue("R_F_ID").equals(f_id);
+                val.getValue("F_ID").equals(f_id);
             /*
             Function<Value, Value> set = (val)->{
                 val.setValue("F_SEATS_LEFT", String.valueOf(Long.parseLong(val.getValue("F_SEATS_LEFT")) + 1));
@@ -192,9 +197,9 @@ public class DeleteReservationHistory extends Procedure {
                 return val;
             };
              */
-            var r = new Reservation();
-            var p = r.getUpdateEventInfo(rs);
-            events.add(new UpdateEvent(id, so, po, p.first, p.second, where, r.getTableNames()));
+            var f = new Flight();
+            var p = f.getUpdateEventInfo(rs);
+            events.add(new UpdateEvent(id, so, po, p.first, p.second, where, f.getTableNames()));
         }
 
         ++po;
@@ -224,9 +229,9 @@ public class DeleteReservationHistory extends Procedure {
                 return val;
             };
              */
-            var r = new Reservation();
-            var p = r.getUpdateEventInfo(rs);
-            events.add(new UpdateEvent(id, so, po, p.first, p.second, where, r.getTableNames()));
+            var c = new Customer();
+            var p = c.getUpdateEventInfo(rs);
+            events.add(new UpdateEvent(id, so, po, p.first, p.second, where, c.getTableNames()));
         }
 
         ++po;
@@ -258,9 +263,9 @@ public class DeleteReservationHistory extends Procedure {
                 };
                 */
 
-                var r = new Reservation();
-                var p = r.getUpdateEventInfo(rs);
-                events.add(new UpdateEvent(id, so, po, p.first, p.second, where, r.getTableNames()));
+                var ff = new FrequentFlyer();
+                var p = ff.getUpdateEventInfo(rs);
+                events.add(new UpdateEvent(id, so, po, p.first, p.second, where, ff.getTableNames()));
             }
         }
 

@@ -63,7 +63,7 @@ public class AddedTweet implements PojoHistory {
     @Override
     public Set<String> getTableNames() {
         if(table == null){
-            table = new HashSet<>(Collections.singleton(TwitterConstantsHistory.TABLENAME_ADDED_TWEETS));
+            table = new HashSet<>(Collections.singleton(this.getClass().getName()));
         }
         return table;
     }

@@ -20,6 +20,7 @@ package com.oltpbenchmark.benchmarks.seatsHistories.procedures;
 
 import com.oltpbenchmark.api.Procedure;
 import com.oltpbenchmark.api.SQLStmt;
+import com.oltpbenchmark.apiHistory.ProcedureHistory;
 import com.oltpbenchmark.apiHistory.events.*;
 import com.oltpbenchmark.benchmarks.seats.util.CustomerId;
 import com.oltpbenchmark.benchmarks.seats.util.ErrorType;
@@ -36,7 +37,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.function.Function;
 
-public class NewReservationHistory extends Procedure {
+public class NewReservationHistory extends ProcedureHistory {
     private static final Logger LOG = LoggerFactory.getLogger(NewReservationHistory.class);
 
     public final SQLStmt GetFlight = new SQLStmt(
@@ -66,7 +67,7 @@ public class NewReservationHistory extends Procedure {
 
     public final SQLStmt UpdateFlight = new SQLStmt(
             "UPDATE " + SEATSConstantsHistory.TABLENAME_FLIGHT +
-            "   SET F_SEATS_LEFT = F_SEATS_LEFT - 1 " +
+            "   SET F_SEATS_LEFT = F_SEATS_LEFT - 1, " +
             "       WRITEID = CONCAT(?, ';', SPLIT_PART(WRITEID, ';', 1))" +
             " WHERE F_ID = ? RETURNING *");
 
@@ -77,7 +78,7 @@ public class NewReservationHistory extends Procedure {
             "       C_IATTR12 = ?, " +
             "       C_IATTR13 = ?, " +
             "       C_IATTR14 = ?, " +
-            "       C_IATTR15 = ? " +
+            "       C_IATTR15 = ?, " +
             "       WRITEID = CONCAT(?, ';', SPLIT_PART(WRITEID, ';', 1))" +
             " WHERE C_ID = ? RETURNING *");
 
@@ -87,7 +88,7 @@ public class NewReservationHistory extends Procedure {
             "       FF_IATTR11 = ?, " +
             "       FF_IATTR12 = ?, " +
             "       FF_IATTR13 = ?, " +
-            "       FF_IATTR14 = ? " +
+            "       FF_IATTR14 = ?, " +
             "       WRITEID = CONCAT(?, ';', SPLIT_PART(WRITEID, ';', 1))" +
             " WHERE FF_C_ID = ? " +
             "   AND FF_AL_ID = ? RETURNING *");
@@ -108,7 +109,7 @@ public class NewReservationHistory extends Procedure {
             "   R_IATTR06, " +
             "   R_IATTR07, " +
             "   R_IATTR08, " +
-            "   WRITEID, " +
+            "   WRITEID " +
             ") VALUES (" +
             "   ?, " +  // R_ID
             "   ?, " +  // R_C_ID
@@ -123,7 +124,7 @@ public class NewReservationHistory extends Procedure {
             "   ?, " +  // R_ATTR05
             "   ?, " +  // R_ATTR06
             "   ?, " +  // R_ATTR07
-            "   ? " +   // R_ATTR08
+            "   ?, " +   // R_ATTR08
             "   ? " +   //WRITEID
             ") RETURNING *");
 
@@ -136,13 +137,7 @@ public class NewReservationHistory extends Procedure {
 
         try (PreparedStatement stmt = this.getPreparedStatement(conn, GetFlight, f_id)) {
             try (ResultSet results = stmt.executeQuery()) {
-                found = results.next();
-                if (!found) {
-                    LOG.debug("Error Type [{}]: Invalid flight {}", ErrorType.INVALID_FLIGHT_ID, f_id);
-                    return;
-                }
-                airline_id = results.getLong("F_AL_ID");
-                seats_left = results.getLong("F_SEATS_LEFT");
+
 
                 Function<Value, Boolean> where = (val) ->
                     val != null &&
@@ -150,6 +145,15 @@ public class NewReservationHistory extends Procedure {
                 var f = new Flight();
                 var wro = f.getSelectEventInfo(results);
                 events.add(new SelectEvent(id, so, po, wro, where, f.getTableNames()));
+
+                results.beforeFirst();
+                found = results.next();
+                if (!found) {
+                    LOG.debug("Error Type [{}]: Invalid flight {}", ErrorType.INVALID_FLIGHT_ID, f_id);
+                    return;
+                }
+                airline_id = results.getLong("F_AL_ID");
+                seats_left = results.getLong("F_SEATS_LEFT");
             }
         }
         ++po;
@@ -157,11 +161,6 @@ public class NewReservationHistory extends Procedure {
         // Airline Information
         try (PreparedStatement stmt = this.getPreparedStatement(conn, GetAirline, airline_id)) {
             try (ResultSet results = stmt.executeQuery()) {
-                found = results.next();
-                if (!found) {
-                    LOG.debug("Error Type [{}]: Invalid airline {}", ErrorType.INVALID_FLIGHT_ID, airline_id);
-                    return;
-                }
 
                 Function<Value, Boolean> where = (val) ->
                     val != null &&
@@ -169,6 +168,13 @@ public class NewReservationHistory extends Procedure {
                 var al = new Airline();
                 var wro = al.getSelectEventInfo(results);
                 events.add(new SelectEvent(id, so, po, wro, where, al.getTableNames()));
+
+                results.beforeFirst();
+                found = results.next();
+                if (!found) {
+                    LOG.debug("Error Type [{}]: Invalid airline {}", ErrorType.INVALID_FLIGHT_ID, airline_id);
+                    return;
+                }
             }
         }
         ++po;

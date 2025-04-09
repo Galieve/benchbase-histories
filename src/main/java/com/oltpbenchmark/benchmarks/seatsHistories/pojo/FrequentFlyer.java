@@ -103,7 +103,7 @@ public class FrequentFlyer implements PojoHistory {
     @Override
     public Set<String> getTableNames() {
         if(table == null){
-            table = new HashSet<>(Collections.singleton(SEATSConstantsHistory.TABLENAME_FREQUENT_FLYER));
+            table = new HashSet<>(Collections.singleton(this.getClass().getName()));
         }
         return table;
     }

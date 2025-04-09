@@ -43,8 +43,10 @@ package com.oltpbenchmark.benchmarks.seatsHistories;
 import com.oltpbenchmark.api.Procedure;
 import com.oltpbenchmark.api.Procedure.UserAbortException;
 import com.oltpbenchmark.api.TransactionType;
+import com.oltpbenchmark.apiHistory.TransactionTypeHistory;
 import com.oltpbenchmark.apiHistory.WorkerHistory;
 import com.oltpbenchmark.apiHistory.events.Event;
+import com.oltpbenchmark.apiHistory.isolationLevels.IsolationLevel;
 import com.oltpbenchmark.benchmarks.seats.util.CustomerId;
 import com.oltpbenchmark.benchmarks.seats.util.FlightId;
 import com.oltpbenchmark.benchmarks.seatsHistories.procedures.*;
@@ -66,12 +68,12 @@ public class SEATSWorkerHistory extends WorkerHistory<SEATSBenchmarkHistory> {
      * Airline Benchmark Transactions
      */
     private enum Transaction {
-        DeleteReservation(DeleteReservationHistory.class),
-        FindFlights(FindFlightsHistory.class),
-        FindOpenSeats(FindOpenSeatsHistory.class),
-        NewReservation(NewReservationHistory.class),
-        UpdateCustomer(UpdateCustomerHistory.class),
-        UpdateReservation(UpdateReservationHistory.class);
+        DeleteReservationHistory(DeleteReservationHistory.class),
+        FindFlightsHistory(FindFlightsHistory.class),
+        FindOpenSeatsHistory(FindOpenSeatsHistory.class),
+        NewReservationHistory(NewReservationHistory.class),
+        UpdateCustomerHistory(UpdateCustomerHistory.class),
+        UpdateReservationHistory(UpdateReservationHistory.class);
 
         Transaction(Class<? extends Procedure> proc_class) {
             this.proc_class = proc_class;
@@ -182,7 +184,7 @@ public class SEATSWorkerHistory extends WorkerHistory<SEATSBenchmarkHistory> {
     // ADDITIONAL DATA MEMBERS
     // -----------------------------------------------------------------
 
-    private final SEATSProfile profile;
+    private final SEATSProfileHistory profile;
     private final RandomGenerator rng;
     private final List<Reservation> tmp_reservations = new ArrayList<>();
 
@@ -246,14 +248,26 @@ public class SEATSWorkerHistory extends WorkerHistory<SEATSBenchmarkHistory> {
         super(benchmark, id);
 
         this.rng = benchmark.getRandomGenerator();
-        this.profile = new SEATSProfile(benchmark, rng);
+        this.profile = new SEATSProfileHistory(benchmark, rng);
     }
 
-    /*
+
+    private TransactionType getTransactionType(Procedure proc){
+        for(var es : procedures.entrySet()){
+            if(es.getValue() == proc){
+                return es.getKey();
+            }
+        }
+        return null;
+    }
+
 
     protected void initialize() {
         try {
-            this.profile.loadProfile(this);
+            var isolationMode = this.configuration.getIsolationMode();
+            var iso = IsolationLevel.get(isolationMode);
+            var events = this.profile.loadProfile(this, getId(), transactions.size());
+            transactions.add(new com.oltpbenchmark.apiHistory.events.Transaction(events, getId(), transactions.size(), iso, "LoadConfigHistory"));
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
         }
@@ -276,8 +290,25 @@ public class SEATSWorkerHistory extends WorkerHistory<SEATSBenchmarkHistory> {
 
         // Fire off a FindOpenSeatsHistory so that we can prime ourselves
         FindOpenSeatsHistory proc = this.getProcedure(FindOpenSeatsHistory.class);
+        var transactionType = getTransactionType(proc);
         try (Connection conn = getBenchmark().makeConnection()) {
-            boolean ret = this.executeFindOpenSeats(conn, proc, events, id, so);
+
+            var connIso = conn.getTransactionIsolation();
+            if(transactionType == null || !(transactionType instanceof TransactionTypeHistory)){
+                throw new RuntimeException("Problem when casting Transaction while initializing SEATSWorkerHistory");
+            }
+            var typeH = (TransactionTypeHistory) transactionType;
+            var iso = typeH.getIsolationLevel();
+
+            conn.setTransactionIsolation(iso.getMode());
+
+
+            var events = new ArrayList<Event>();
+            var id = getId();
+            boolean ret = this.executeFindOpenSeats(conn, proc, events, id, transactions.size());
+
+            transactions.add(new com.oltpbenchmark.apiHistory.events.Transaction(events, getId(), transactions.size(), iso, transactionType.getName()));
+            conn.setTransactionIsolation(connIso);
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
         }
@@ -287,7 +318,6 @@ public class SEATSWorkerHistory extends WorkerHistory<SEATSBenchmarkHistory> {
         }
     }
 
-     */
 
     @Override
     protected TransactionStatus executeWorkHistory(Connection conn, TransactionType txnType, ArrayList<Event> events, int id, int so) throws UserAbortException, SQLException {
@@ -302,27 +332,27 @@ public class SEATSWorkerHistory extends WorkerHistory<SEATSBenchmarkHistory> {
         boolean ret = false;
         try {
             switch (txn) {
-                case DeleteReservation: {
+                case DeleteReservationHistory: {
                     ret = this.executeDeleteReservation(conn, (DeleteReservationHistory) proc, events, id, so);
                     break;
                 }
-                case FindFlights: {
+                case FindFlightsHistory: {
                     ret = this.executeFindFlights(conn, (FindFlightsHistory) proc, events, id, so);
                     break;
                 }
-                case FindOpenSeats: {
+                case FindOpenSeatsHistory: {
                     ret = this.executeFindOpenSeats(conn, (FindOpenSeatsHistory) proc, events, id, so);
                     break;
                 }
-                case NewReservation: {
+                case NewReservationHistory: {
                     ret = this.executeNewReservation(conn, (NewReservationHistory) proc, events, id, so);
                     break;
                 }
-                case UpdateCustomer: {
+                case UpdateCustomerHistory: {
                     ret = this.executeUpdateCustomer(conn, (UpdateCustomerHistory) proc, events, id, so);
                     break;
                 }
-                case UpdateReservation: {
+                case UpdateReservationHistory: {
                     ret = this.executeUpdateReservation(conn, (UpdateReservationHistory) proc, events, id, so);
                     break;
                 }

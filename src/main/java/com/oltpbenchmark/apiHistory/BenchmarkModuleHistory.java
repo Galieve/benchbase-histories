@@ -22,8 +22,6 @@ import com.oltpbenchmark.WorkloadConfiguration;
 import com.oltpbenchmark.api.*;
 import com.oltpbenchmark.apiHistory.events.Transaction;
 import com.oltpbenchmark.apiHistory.isolationLevels.IsolationLevel;
-import com.oltpbenchmark.apiHistory.isolationLevels.Serializabilty;
-import com.oltpbenchmark.benchmarks.tpccHistories.TPCCBenchmarkHistory;
 import com.oltpbenchmark.util.ClassUtil;
 import com.oltpbenchmark.util.ThreadUtil;
 
@@ -95,7 +93,7 @@ public abstract class BenchmarkModuleHistory extends BenchmarkModule{
                     if(lt instanceof LoaderThreadHistory){
                         var lth = (LoaderThreadHistory) lt;
                         var events = lth.getEvents();
-                        loadTransactions.add(new Transaction(events, 0, so+loadTransactions.size(), IsolationLevel.get(isolationLevel)));
+                        loadTransactions.add(new Transaction(events, 0, so+loadTransactions.size(), IsolationLevel.get(isolationLevel), "loader"));
                     }
                 }
 

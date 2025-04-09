@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <parameters>
-
     <!-- Connection details -->
     <type>POSTGRES</type>
     <driver>org.postgresql.Driver</driver>
@@ -8,24 +7,20 @@
     <username>admin</username>
     <password>password</password>
     <isolation>TRANSACTION_SERIALIZABLE</isolation>
-    <!-- <isolation>TRANSACTION_READ_COMMITTED</isolation> -->
     <batchsize>128</batchsize>
-
     <!-- Scale factor is the number of warehouses in TPCC -->
     <scalefactor>1</scalefactor>
-
     <!-- The workload -->
     <terminals>3</terminals>
     <works>
         <work>
             <time>3</time>
-            <rate>100</rate>
+            <rate>1</rate>
             <weights>45,43,4,4,4</weights>
             <!-- <weights>30,0,0,70,0</weights> -->
         </work>
     </works>
-
-<!-- TPCC specific -->
+    <!-- TPCC specific -->
     <transactiontypes>
         <transactiontype>
             <name>NewOrderHistory</name>

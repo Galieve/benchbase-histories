@@ -19,7 +19,13 @@ package com.oltpbenchmark.benchmarks.seatsHistories;
 
 import com.oltpbenchmark.api.Loader;
 import com.oltpbenchmark.api.LoaderThread;
+import com.oltpbenchmark.apiHistory.LoaderThreadHistory;
+import com.oltpbenchmark.apiHistory.PojoHistory;
+import com.oltpbenchmark.apiHistory.events.Event;
+import com.oltpbenchmark.apiHistory.events.EventID;
+import com.oltpbenchmark.apiHistory.events.InsertEvent;
 import com.oltpbenchmark.benchmarks.seats.util.*;
+import com.oltpbenchmark.benchmarks.seatsHistories.pojo.*;
 import com.oltpbenchmark.catalog.Column;
 import com.oltpbenchmark.catalog.Table;
 import com.oltpbenchmark.util.*;
@@ -27,6 +33,7 @@ import com.oltpbenchmark.util.RandomDistribution.Flat;
 import com.oltpbenchmark.util.RandomDistribution.FlatHistogram;
 import com.oltpbenchmark.util.RandomDistribution.Gaussian;
 import com.oltpbenchmark.util.RandomDistribution.Zipf;
+import com.oltpbenchmark.utilHistory.SQLUtilHistory;
 import org.apache.commons.collections4.map.ListOrderedMap;
 import org.apache.commons.collections4.set.ListOrderedSet;
 
@@ -44,7 +51,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
     // INTERNAL DATA MEMBERS
     // -----------------------------------------------------------------
 
-    protected final SEATSProfile profile;
+    protected final SEATSProfileHistory profile;
 
     /**
      * Mapping from Airports to their geolocation coordinates AirportCode ->
@@ -87,7 +94,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
 
         this.rng = benchmark.getRandomGenerator();
         // TODO: Sync with the base class rng
-        this.profile = new SEATSProfile(benchmark, this.rng);
+        this.profile = new SEATSProfileHistory(benchmark, this.rng);
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("CONSTRUCTOR: {}", SEATSLoaderHistory.class.getName());
@@ -135,11 +142,14 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
         // 6. Then we save the profile
 
         final CountDownLatch histLatch = new CountDownLatch(1);
+        int soIncr = 0;
 
         // 1. [histLatch] HISTOGRAMS
-        threads.add(new LoaderThread(this.benchmark) {
+        int finalSoIncr = soIncr;
+        threads.add(new LoaderThreadHistory(this.benchmark) {
             @Override
             public void load(Connection conn) {
+                //No SQL query
                 loadHistograms();
             }
 
@@ -148,15 +158,17 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
                 histLatch.countDown();
             }
         });
+        ++soIncr;
 
         final CountDownLatch fixedLatch = new CountDownLatch(3);
         final CountDownLatch countryLatch = new CountDownLatch(1);
 
         // 2. [countryLatch] COUNTRY
-        threads.add(new LoaderThread(this.benchmark) {
+        int finalSoIncr1 = soIncr;
+        threads.add(new LoaderThreadHistory(this.benchmark) {
             @Override
             public void load(Connection conn) {
-                loadFixedTable(conn, SEATSConstantsHistory.TABLENAME_COUNTRY);
+                loadFixedTable(conn, SEATSConstantsHistory.TABLENAME_COUNTRY, events, so + finalSoIncr1, 0);
             }
 
             @Override
@@ -174,12 +186,14 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
                 countryLatch.countDown();
             }
         });
+        ++soIncr;
 
         // 2. AIRPORT depends on COUNTRY
-        threads.add(new LoaderThread(this.benchmark) {
+        int finalSoIncr2 = soIncr;
+        threads.add(new LoaderThreadHistory(this.benchmark) {
             @Override
             public void load(Connection conn) {
-                loadFixedTable(conn, SEATSConstantsHistory.TABLENAME_AIRPORT);
+                loadFixedTable(conn, SEATSConstantsHistory.TABLENAME_AIRPORT, events, so + finalSoIncr2, 0);
             }
 
             @Override
@@ -196,12 +210,14 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
                 fixedLatch.countDown();
             }
         });
+        ++soIncr;
 
         // 2. AIRLINE depends on COUNTRY
-        threads.add(new LoaderThread(this.benchmark) {
+        int finalSoIncr3 = soIncr;
+        threads.add(new LoaderThreadHistory(this.benchmark) {
             @Override
             public void load(Connection conn) {
-                loadFixedTable(conn, SEATSConstantsHistory.TABLENAME_AIRLINE);
+                loadFixedTable(conn, SEATSConstantsHistory.TABLENAME_AIRLINE, events, so + finalSoIncr3, 0);
             }
 
             @Override
@@ -219,14 +235,16 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
                 fixedLatch.countDown();
             }
         });
+        ++soIncr;
 
         final CountDownLatch scalingPrepLatch = new CountDownLatch(1);
 
         // 3. [scalingPrepLatch] guards all of the fixed tables and should
         // be used from this point onwards instead of individual fixed locks
-        threads.add(new LoaderThread(this.benchmark) {
+        threads.add(new LoaderThreadHistory(this.benchmark) {
             @Override
             public void load(Connection conn) {
+                //NO SQL query
                 // Setup the # of flights per airline
                 flights_per_airline.putAll(SEATSLoaderHistory.this.profile.getAirlineCodes(), 0);
             }
@@ -245,17 +263,18 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
                 scalingPrepLatch.countDown();
             }
         });
+        ++soIncr;
 
         final CountDownLatch custLatch = new CountDownLatch(1);
         final CountDownLatch distanceLatch = new CountDownLatch(1);
         final CountDownLatch flightLatch = new CountDownLatch(1);
 
         // 4. [custLatch] CUSTOMER depends on AIRPORT
-        threads.add(new LoaderThread(this.benchmark) {
+        int finalSoIncr4 = soIncr;
+        threads.add(new LoaderThreadHistory(this.benchmark) {
             @Override
             public void load(Connection conn) {
-
-                loadScalingTable(conn, SEATSConstantsHistory.TABLENAME_CUSTOMER);
+                loadScalingTable(conn, SEATSConstantsHistory.TABLENAME_CUSTOMER, events, so + finalSoIncr4, 0);
 
             }
 
@@ -274,14 +293,16 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
                 custLatch.countDown();
             }
         });
+        ++soIncr;
 
         // 4. AIRPORT_DISTANCE depends on AIRPORT
-        threads.add(new LoaderThread(this.benchmark) {
+        int finalSoIncr5 = soIncr;
+        threads.add(new LoaderThreadHistory(this.benchmark) {
             @Override
             public void load(Connection conn) {
 
 
-                loadScalingTable(conn, SEATSConstantsHistory.TABLENAME_AIRPORT_DISTANCE);
+                loadScalingTable(conn, SEATSConstantsHistory.TABLENAME_AIRPORT_DISTANCE, events, so + finalSoIncr5, 0);
 
             }
 
@@ -299,14 +320,16 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
                 distanceLatch.countDown();
             }
         });
+        ++soIncr;
 
         // 4. [flightLatch] FLIGHT depends on AIRPORT_DISTANCE, AIRLINE, AIRPORT
-        threads.add(new LoaderThread(this.benchmark) {
+        int finalSoIncr6 = soIncr;
+        threads.add(new LoaderThreadHistory(this.benchmark) {
             @Override
             public void load(Connection conn) {
 
 
-                loadScalingTable(conn, SEATSConstantsHistory.TABLENAME_FLIGHT);
+                loadScalingTable(conn, SEATSConstantsHistory.TABLENAME_FLIGHT, events, so + finalSoIncr6, 0);
 
             }
 
@@ -324,16 +347,18 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
                 flightLatch.countDown();
             }
         });
+        ++soIncr;
 
         final CountDownLatch loadLatch = new CountDownLatch(2);
 
         // 5. RESERVATIONS depends on FLIGHT, CUSTOMER
-        threads.add(new LoaderThread(this.benchmark) {
+        int finalSoIncr7 = soIncr;
+        threads.add(new LoaderThreadHistory(this.benchmark) {
             @Override
             public void load(Connection conn) {
 
 
-                loadScalingTable(conn, SEATSConstantsHistory.TABLENAME_RESERVATION);
+                loadScalingTable(conn, SEATSConstantsHistory.TABLENAME_RESERVATION, events, so + finalSoIncr7, 0);
 
             }
 
@@ -352,13 +377,16 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
                 loadLatch.countDown();
             }
         });
+
+        ++soIncr;
 
         // 5. FREQUENT_FLYER depends on FLIGHT, CUSTOMER, AIRLINE
-        threads.add(new LoaderThread(this.benchmark) {
+        int finalSoIncr8 = soIncr;
+        threads.add(new LoaderThreadHistory(this.benchmark) {
             @Override
             public void load(Connection conn) {
 
-                loadScalingTable(conn, SEATSConstantsHistory.TABLENAME_FREQUENT_FLYER);
+                loadScalingTable(conn, SEATSConstantsHistory.TABLENAME_FREQUENT_FLYER, events, so + finalSoIncr8, 0);
 
             }
 
@@ -378,11 +406,13 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
                 loadLatch.countDown();
             }
         });
+        ++soIncr;
 
-        threads.add(new LoaderThread(this.benchmark) {
+        int finalSoIncr9 = soIncr;
+        threads.add(new LoaderThreadHistory(this.benchmark) {
             @Override
             public void load(Connection conn) throws SQLException {
-                profile.saveProfile(conn);
+                profile.saveProfile(conn, events, so + finalSoIncr9, 0);
             }
 
             @Override
@@ -460,6 +490,22 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
 
     }
 
+    protected PojoHistory getPojoTable(String tableName){
+        return switch (tableName){
+            case SEATSConstantsHistory.TABLENAME_AIRLINE -> new Airline();
+            case SEATSConstantsHistory.TABLENAME_AIRPORT -> new Airport();
+            case SEATSConstantsHistory.TABLENAME_AIRPORT_DISTANCE -> new AirportDistance();
+            case SEATSConstantsHistory.TABLENAME_CONFIG_HISTOGRAMS -> new ConfigHistograms();
+            case SEATSConstantsHistory.TABLENAME_CONFIG_PROFILE -> new ConfigProfile();
+            case SEATSConstantsHistory.TABLENAME_COUNTRY -> new Country();
+            case SEATSConstantsHistory.TABLENAME_CUSTOMER -> new Customer();
+            case SEATSConstantsHistory.TABLENAME_FLIGHT -> new Flight();
+            case SEATSConstantsHistory.TABLENAME_FREQUENT_FLYER -> new FrequentFlyer();
+            case SEATSConstantsHistory.TABLENAME_RESERVATION -> new Reservation();
+            default -> null;
+        };
+    }
+
     /**
      * The fixed tables are those that are generated from the static data files
      * The number of tuples in these tables will not change based on the scale
@@ -468,12 +514,14 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
      * @param conn
      * @param table_name
      */
-    protected void loadFixedTable(Connection conn, String table_name) {
+    protected int loadFixedTable(Connection conn, String table_name, ArrayList<Event> events, int so, int po) {
         LOG.debug(String.format("Loading table '%s' from fixed file", table_name));
         try {
             Table catalog_tbl = this.benchmark.getCatalog().getTable(table_name);
+            var pojo = getPojoTable(table_name);
             try (FixedDataIterable iterable = this.getFixedIterable(catalog_tbl)) {
-                this.loadTable(conn, catalog_tbl, iterable, workConf.getBatchSize());
+                po = this.loadTable(conn, catalog_tbl, iterable, workConf.getBatchSize(), pojo, events, so, po);
+                return po;
             }
 
         } catch (Throwable ex) {
@@ -488,11 +536,12 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
      * @param conn
      * @param table_name
      */
-    protected void loadScalingTable(Connection conn, String table_name) {
+    protected int loadScalingTable(Connection conn, String table_name, ArrayList<Event> events, int so, int po) {
         try {
             Table catalog_tbl = this.benchmark.getCatalog().getTable(table_name);
+            var pojo = getPojoTable(table_name);
             Iterable<Object[]> iterable = this.getScalingIterable(catalog_tbl);
-            this.loadTable(conn, catalog_tbl, iterable, workConf.getBatchSize());
+            return this.loadTable(conn, catalog_tbl, iterable, workConf.getBatchSize(), pojo, events, so, po);
         } catch (Throwable ex) {
             throw new RuntimeException("Failed to load data files for scaling-sized table '" + table_name + "'", ex);
         }
@@ -501,7 +550,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
     /**
      * @param catalog_tbl
      */
-    public void loadTable(Connection conn, Table catalog_tbl, Iterable<Object[]> iterable, int batch_size) {
+    public int loadTable(Connection conn, Table catalog_tbl, Iterable<Object[]> iterable, int batch_size, PojoHistory pojo, ArrayList<Event> events, int so, int po) {
         // Special Case: Airport Locations
         final boolean is_airport = catalog_tbl.getName().equalsIgnoreCase(SEATSConstantsHistory.TABLENAME_AIRPORT);
 
@@ -544,7 +593,8 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
         int row_batch = 0;
 
         String insert_sql = SQLUtil.getInsertSQL(catalog_tbl, this.getDatabaseType());
-        try (PreparedStatement insert_stmt = conn.prepareStatement(insert_sql)) {
+        insert_sql = insert_sql + " RETURNING *";
+        try (PreparedStatement insert_stmt = conn.prepareStatement(insert_sql, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
             int[] sqlTypes = catalog_tbl.getColumnTypes();
 
             for (Object[] tuple : iterable) {
@@ -611,33 +661,37 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
                     }
                 }
 
-                for (int i = 0; i < tuple.length; i++) {
+                for (int i = 0; i < tuple.length - 1; i++) {
                     try {
                         if (tuple[i] != null) {
                             insert_stmt.setObject(i + 1, tuple[i]);
                         } else {
                             insert_stmt.setNull(i + 1, sqlTypes[i]);
                         }
+
                     } catch (SQLDataException ex) {
                         LOG.error("INVALID {} TUPLE: {}", catalog_tbl.getName().toLowerCase(), Arrays.toString(tuple));
                         throw new RuntimeException("Failed to set value for " + catalog_tbl.getColumn(i).getName().toLowerCase(), ex);
                     }
                 }
-                insert_stmt.addBatch();
+                var evID = EventID.generateID(0, so, po);
+                insert_stmt.setString(tuple.length, evID);
+                insert_stmt.execute();
                 row_idx++;
 
-                if (++row_batch >= batch_size) {
-                    LOG.trace(String.format("Loading %s batch [total=%d]", catalog_tbl.getName().toLowerCase(), row_idx));
-                    insert_stmt.executeBatch();
-                    insert_stmt.clearBatch();
-                    row_batch = 0;
+                var rs = insert_stmt.getResultSet();
+
+                if(SQLUtilHistory.size(rs) == 0){
+                    LOG.debug("Failed inserting tuple: " + Arrays.toString(tuple));
+                }
+                else{
+                    var p = pojo.getInsertEventInfo(rs);
+                    events.add(new InsertEvent(0, so, po, p, pojo.getTableNames()));
+                    ++po;
                 }
 
             }
 
-            if (row_batch > 0) {
-                insert_stmt.executeBatch();
-            }
 
         } catch (Exception ex) {
             throw new RuntimeException("Failed to load table " + catalog_tbl.getName().toLowerCase(), ex);
@@ -650,6 +704,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
         }
 
         LOG.debug(String.format("Finished loading all %d tuples for %s", row_idx, catalog_tbl.getName().toLowerCase()));
+        return po;
     }
 
     // ----------------------------------------------------------------
@@ -743,8 +798,7 @@ public class SEATSLoaderHistory extends Loader<SEATSBenchmarkHistory> {
         }
         // Airport Distance
         else if (name.equalsIgnoreCase(SEATSConstantsHistory.TABLENAME_AIRPORT_DISTANCE)) {
-            int max_distance = Integer.MAX_VALUE; // SEATSConstantsHistory.DISTANCES[SEATSConstantsHistory.DISTANCES.length
-            // - 1];
+            int max_distance = SEATSConstantsHistory.DISTANCES[SEATSConstantsHistory.DISTANCES.length - 1];
             it = new AirportDistanceIterable(catalog_tbl, max_distance);
         }
         // Flights

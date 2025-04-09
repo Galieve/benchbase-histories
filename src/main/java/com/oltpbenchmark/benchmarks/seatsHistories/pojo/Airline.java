@@ -37,22 +37,22 @@ public class Airline implements PojoHistory {
     public String al_name;
     public long al_co_id;
 
-    public long ap_iattr00;
-    public long ap_iattr01;
-    public long ap_iattr02;
-    public long ap_iattr03;
-    public long ap_iattr04;
-    public long ap_iattr05;
-    public long ap_iattr06;
-    public long ap_iattr07;
-    public long ap_iattr08;
-    public long ap_iattr09;
-    public long ap_iattr10;
-    public long ap_iattr11;
-    public long ap_iattr12;
-    public long ap_iattr13;
-    public long ap_iattr14;
-    public long ap_iattr15;
+    public long al_iattr00;
+    public long al_iattr01;
+    public long al_iattr02;
+    public long al_iattr03;
+    public long al_iattr04;
+    public long al_iattr05;
+    public long al_iattr06;
+    public long al_iattr07;
+    public long al_iattr08;
+    public long al_iattr09;
+    public long al_iattr10;
+    public long al_iattr11;
+    public long al_iattr12;
+    public long al_iattr13;
+    public long al_iattr14;
+    public long al_iattr15;
     public String writeID;
 
     protected static Set<String> table;
@@ -73,22 +73,22 @@ public class Airline implements PojoHistory {
             new Pair<>("STRING", "AL_CALL_SIGN"),
             new Pair<>("STRING", "AL_NAME"),
             new Pair<>("LONG", "AL_CO_ID"),
-            new Pair<>("LONG", "AP_IATTR00"),
-            new Pair<>("LONG", "AP_IATTR01"),
-            new Pair<>("LONG", "AP_IATTR02"),
-            new Pair<>("LONG", "AP_IATTR03"),
-            new Pair<>("LONG", "AP_IATTR04"),
-            new Pair<>("LONG", "AP_IATTR05"),
-            new Pair<>("LONG", "AP_IATTR06"),
-            new Pair<>("LONG", "AP_IATTR07"),
-            new Pair<>("LONG", "AP_IATTR08"),
-            new Pair<>("LONG", "AP_IATTR09"),
-            new Pair<>("LONG", "AP_IATTR10"),
-            new Pair<>("LONG", "AP_IATTR11"),
-            new Pair<>("LONG", "AP_IATTR12"),
-            new Pair<>("LONG", "AP_IATTR13"),
-            new Pair<>("LONG", "AP_IATTR14"),
-            new Pair<>("LONG", "AP_IATTR15"),
+            new Pair<>("LONG", "AL_IATTR00"),
+            new Pair<>("LONG", "AL_IATTR01"),
+            new Pair<>("LONG", "AL_IATTR02"),
+            new Pair<>("LONG", "AL_IATTR03"),
+            new Pair<>("LONG", "AL_IATTR04"),
+            new Pair<>("LONG", "AL_IATTR05"),
+            new Pair<>("LONG", "AL_IATTR06"),
+            new Pair<>("LONG", "AL_IATTR07"),
+            new Pair<>("LONG", "AL_IATTR08"),
+            new Pair<>("LONG", "AL_IATTR09"),
+            new Pair<>("LONG", "AL_IATTR10"),
+            new Pair<>("LONG", "AL_IATTR11"),
+            new Pair<>("LONG", "AL_IATTR12"),
+            new Pair<>("LONG", "AL_IATTR13"),
+            new Pair<>("LONG", "AL_IATTR14"),
+            new Pair<>("LONG", "AL_IATTR15"),
             new Pair<>("STRING", "WRITEID")
         );
     }
@@ -96,7 +96,7 @@ public class Airline implements PojoHistory {
     @Override
     public Set<String> getTableNames() {
         if(table == null){
-            table = new HashSet<>(Collections.singleton(SEATSConstantsHistory.TABLENAME_AIRPORT));
+            table = new HashSet<>(Collections.singleton(this.getClass().getName()));
         }
         return table;
     }

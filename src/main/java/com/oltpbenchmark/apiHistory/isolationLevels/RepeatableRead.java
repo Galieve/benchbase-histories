@@ -4,11 +4,12 @@ import com.oltpbenchmark.apiHistory.History;
 import com.oltpbenchmark.apiHistory.events.ReadEvent;
 import com.oltpbenchmark.apiHistory.events.Transaction;
 import com.oltpbenchmark.apiHistory.events.Variable;
+import com.oltpbenchmark.apiHistory.prefix.PrefixHistory;
 
 import java.sql.Connection;
 import java.util.ArrayList;
 
-public class RepeatableRead extends IsolationLevel{
+public class RepeatableRead implements IsolationLevel{
 
     protected static RepeatableRead instance;
 
@@ -31,5 +32,16 @@ public class RepeatableRead extends IsolationLevel{
     @Override
     public int getMode() {
         return Connection.TRANSACTION_REPEATABLE_READ;
+    }
+
+    @Override
+    public boolean hasTransactionalAxioms() {
+        return false;
+    }
+
+    @Override
+    public boolean isPredicateExtensible(PrefixHistory p, ArrayList<ArrayList<Boolean>> co, Transaction t, Transaction t3) {
+        //TODO
+        return false;
     }
 }

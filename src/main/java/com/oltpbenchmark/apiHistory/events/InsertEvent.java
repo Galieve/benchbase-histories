@@ -10,6 +10,10 @@ public class InsertEvent extends Event {
         this.we = new WriteEvent(this, writeSet);
     }
 
+    protected InsertEvent(InsertEvent e){
+        super(e);
+    }
+
     @Override
     public boolean isRead() {
         return false;
@@ -18,5 +22,10 @@ public class InsertEvent extends Event {
     @Override
     public boolean isWrite() {
         return true;
+    }
+
+    @Override
+    public Event cloneEvent() {
+        return new InsertEvent(this);
     }
 }

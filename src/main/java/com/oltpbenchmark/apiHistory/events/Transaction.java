@@ -21,12 +21,15 @@ public class Transaction implements Iterable<Event>{
 
     protected IsolationLevel isolationLevel;
 
-    public Transaction(ArrayList<Event> events, Integer id, Integer so, IsolationLevel iso) {
+    protected String name;
+
+    public Transaction(ArrayList<Event> events, Integer id, Integer so, IsolationLevel iso, String name) {
         this.events = events;
         this.id = id;
         this.so = so;
         this.isolationLevel = iso;
         this.writeSet = null;
+        this.name = name;
     }
 
     public Integer getId() {
@@ -97,5 +100,25 @@ public class Transaction implements Iterable<Event>{
                ", writeSet=" + writeSet +
                ", isolationLevel=" + isolationLevel +
                '}';
+    }
+
+    public IsolationLevel getIsolationLevel() {
+        return isolationLevel;
+    }
+
+    public boolean hasTransactionalAxioms() {
+        return isolationLevel.hasTransactionalAxioms();
+    }
+
+    public boolean satisfyConstraint(History history, ArrayList<ArrayList<Boolean>> coLarge, Transaction t){
+        return isolationLevel.satisfyConstraint(history, coLarge, t, this);
+    }
+
+    public void setIsolationLevel(IsolationLevel isolationLevel) {
+        this.isolationLevel = isolationLevel;
+    }
+
+    public String getName() {
+        return name;
     }
 }

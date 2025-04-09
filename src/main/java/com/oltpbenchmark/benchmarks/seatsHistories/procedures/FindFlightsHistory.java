@@ -20,6 +20,7 @@ package com.oltpbenchmark.benchmarks.seatsHistories.procedures;
 
 import com.oltpbenchmark.api.Procedure;
 import com.oltpbenchmark.api.SQLStmt;
+import com.oltpbenchmark.apiHistory.ProcedureHistory;
 import com.oltpbenchmark.apiHistory.events.Event;
 import com.oltpbenchmark.apiHistory.events.SelectEvent;
 import com.oltpbenchmark.apiHistory.events.Value;
@@ -29,6 +30,7 @@ import com.oltpbenchmark.utilHistory.SQLUtilHistory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -36,7 +38,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
-public class FindFlightsHistory extends Procedure {
+public class FindFlightsHistory extends ProcedureHistory {
     private static final Logger LOG = LoggerFactory.getLogger(FindFlightsHistory.class);
 
 
@@ -105,7 +107,7 @@ public class FindFlightsHistory extends Procedure {
                         Function<Value, Boolean> where = (val) ->
                             val != null &&
                             Long.parseLong(val.getValue("D_AP_ID0")) == depart_aid &&
-                            Long.parseLong(val.getValue("D_DISTANCE")) <= distance;
+                            Double.parseDouble(val.getValue("D_DISTANCE")) <= distance;
                         var ad = new AirportDistance();
                         var wro = ad.getSelectEventInfo(nearby_results);
                         events.add(new SelectEvent(id, so, po, wro, where, ad.getTableNames()));
@@ -159,10 +161,10 @@ public class FindFlightsHistory extends Procedure {
                         flightResults.beforeFirst();
 
                         var al = new Airline();
-                        var airLineRS = new ArrayList<ResultSet>();
+                        var airLineRS = new ArrayList<String>();
                         try (PreparedStatement al_stmt = this.getPreparedStatement(conn, GetAirline)) {
                             while (flightResults.next()) {
-                                var alID = flightResults.getLong("AL_ID");
+                                var alID = flightResults.getLong("F_AL_ID");
                                 al_stmt.setLong(1, alID);
                                 al_stmt.execute();
                                 var rsAl = al_stmt.getResultSet();
@@ -170,12 +172,12 @@ public class FindFlightsHistory extends Procedure {
                                 Function<Value, Boolean> whereAl = (val) ->
                                     val != null &&
                                     Long.parseLong(val.getValue("AL_ID")) == alID;
-                                var wroAl = f.getSelectEventInfo(rsAl);
+                                var wroAl = al.getSelectEventInfo(rsAl);
                                 events.add(new SelectEvent(id, so, po, wroAl, whereAl, al.getTableNames()));
 
                                 rsAl.first();
                                 //There is at most one result in the query!
-                                airLineRS.add(rsAl);
+                                airLineRS.add(rsAl.getString("AL_NAME"));
 
                                 ++po;
                             }
@@ -197,7 +199,7 @@ public class FindFlightsHistory extends Procedure {
                                 row[r++] = flightResults.getString("F_ID");    // [00] F_ID
                                 row[r++] = flightResults.getLong("F_SEATS_LEFT");    // [01] SEATS_LEFT
 
-                                row[r++] = airLineRS.get(i).getString("AL_NAME");  // [02] AL_NAME
+                                row[r++] = airLineRS.get(i);  // [02] AL_NAME
 
                                 // DEPARTURE AIRPORT
                                 ai_stmt.setLong(1, f_depart_airport);
@@ -222,13 +224,14 @@ public class FindFlightsHistory extends Procedure {
                                     co_stmt.setLong(1, ap_co_id);
                                     co_stmt.execute();
                                     var co_results = co_stmt.getResultSet();
+                                    co_results.next();
                                     row[r++] = co_results.getString("CO_NAME");     // [07] DEPART_AP_COUNTRY
 
                                     Function<Value, Boolean> whereCo = (val) ->
                                         val != null &&
                                         Long.parseLong(val.getValue("CO_ID")) == ap_co_id;
                                     var co = new Country();
-                                    var wroCo = co.getSelectEventInfo(ai_results);
+                                    var wroCo = co.getSelectEventInfo(co_results);
                                     events.add(new SelectEvent(id, so, po, wroCo, whereCo, co.getTableNames()));
                                     ++po;
 
@@ -240,7 +243,7 @@ public class FindFlightsHistory extends Procedure {
 
                                     Function<Value, Boolean> whereAi = (val) ->
                                         val != null &&
-                                        Long.parseLong(val.getValue("AP_ID")) == f_depart_airport;
+                                        Long.parseLong(val.getValue("AP_ID")) == f_arrive_airport;
                                     var ai = new Airport();
                                     var wroAi = ai.getSelectEventInfo(ai_results);
                                     events.add(new SelectEvent(id, so, po, wroAi, whereAi, ai.getTableNames()));
@@ -257,13 +260,14 @@ public class FindFlightsHistory extends Procedure {
                                     co_stmt.setLong(1, ap_co_id);
                                     co_stmt.execute();
                                     var co_results = co_stmt.getResultSet();
+                                    co_results.next();
                                     row[r] = co_results.getString("CO_NAME");     // [12] ARRIVE_AP_COUNTRY
 
                                     Function<Value, Boolean> whereCo = (val) ->
                                         val != null &&
                                         Long.parseLong(val.getValue("CO_ID")) == ap_co_id;
                                     var co = new Country();
-                                    var wroCo = co.getSelectEventInfo(ai_results);
+                                    var wroCo = co.getSelectEventInfo(co_results);
                                     events.add(new SelectEvent(id, so, po, wroCo, whereCo, co.getTableNames()));
                                     ++po;
                                 }

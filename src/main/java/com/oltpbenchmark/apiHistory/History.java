@@ -1,7 +1,7 @@
 package com.oltpbenchmark.apiHistory;
 
 import com.oltpbenchmark.apiHistory.events.*;
-import com.oltpbenchmark.util.Pair;
+import com.oltpbenchmark.apiHistory.util.HistoryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +13,9 @@ public class History {
 
     //Read -> Write
     protected Map<Variable,Map<ReadEvent, WriteEvent>> wro;
+
+    //Structure only used for strong isolation levels in PrefixHistory! Do not use it anywhere else!
+    protected Map<Transaction, Map<Variable, Transaction>> wroPerTransaction;
 
     protected Map<EventID, WriteEvent> writesIDs;
 
@@ -39,12 +42,12 @@ public class History {
         this.translator = computeTranslator();
         this.wroTransactions = translateWR();
         this.wroReadTransactions = translateWRRead();
+        this.wroPerTransaction = computeWRTransaction();
         this.soTransactions = translateSO();
         this.variablePerTable = computePartition();
         this.writePerVariable = computeWritesPerVariable();
         LOG.info("<init> finished!");
     }
-
     public History(History history) {
         this.transactions = history.transactions;
         this.writesIDs = history.writesIDs;
@@ -55,7 +58,14 @@ public class History {
         this.variablePerTable = HistoryUtil.deepcloneSet(history.variablePerTable);
         this.writePerVariable = HistoryUtil.deepcloneSet(history.writePerVariable);
         this.wroReadTransactions = HistoryUtil.deepclone(history.wroReadTransactions);
+        this.wroPerTransaction = HistoryUtil.deepclone(history.wroPerTransaction);
     }
+
+    /*
+    public boolean checkConsistency(ResultHistory result) throws InterruptedException {
+        return CheckSOBound.checkSOBound(this, result);
+    }
+    */
 
     public int width() {
         return transactions.size();
@@ -67,6 +77,11 @@ public class History {
 
     public Map<Variable, Map<ReadEvent, WriteEvent>> getWro() {
         return wro;
+    }
+
+
+    public Map<Transaction, Map<Variable, Transaction>> getWroPerTransaction() {
+        return wroPerTransaction;
     }
 
     public Map<Transaction, Integer> getTranslator() {
@@ -111,6 +126,28 @@ public class History {
         return wro;
     }
 
+    private Map<Transaction, Map<Variable, Transaction>> computeWRTransaction() {
+        var wroPT = new HashMap<Transaction, Map<Variable, Transaction>>();
+        for(var wroES : wro.entrySet()){
+            var variable = wroES.getKey();
+            for(var wrES : wroES.getValue().entrySet()){
+                var r = wrES.getKey();
+                var w = wrES.getValue();
+                var tr = transactions.get(r.getId()).get(r.getSo());
+                var tw = transactions.get(w.getId()).get(w.getSo());
+                //Local reads should not be added!
+                if(tr != tw) {
+                    wroPT.putIfAbsent(tr, new HashMap<>());
+                    wroPT.get(tr).put(variable, tw);
+                }
+                //NOTE: This method is wrong for weak isolation levels such as RC or RR where transactions may read the same variable from different transactions in two different reads!
+
+            }
+        }
+        return wroPT;
+    }
+
+
 
     private void addAbsentInitialRows() {
         var writeSet = new HashMap<Variable, Value>();
@@ -126,45 +163,27 @@ public class History {
                 writeSet.putIfAbsent(variable, null);
             }
         }
+        transactions.get(0).get(0).resetWriteSet();
         var events = transactions.get(0).get(0).getEvents();
-        var initEvent = new InitialAbsentEvent(0,0,events.size(), writeSet);
+        var size = events.size();
+        var initEvent = new InitialAbsentEvent(0,0, size, writeSet);
         events.add(initEvent);
-        writesIDs.put(new EventID(0,0,0), initEvent.getWriteEvent());
+        writesIDs.put(new EventID(0,0,size), initEvent.getWriteEvent());
         transactions.get(0).get(0).resetWriteSet();
     }
 
 
-    private void setWR(Variable variable, ReadEvent r, WriteEvent w) {
+    public boolean setWR(Variable variable, ReadEvent r, WriteEvent w) {
         wro.get(variable).put(r, w);
-    }
-
-    private ArrayList<ArrayList<Boolean>> computeCO(ArrayList<ArrayList<Boolean>> rInit){
-        var co = HistoryUtil.deepclone(rInit);
-        for(var ses: transactions){
-            for(var t2 : ses){
-                var ws = t2.getWriteSet();
-                for(var p : ws.entrySet()) {
-                    var variable = p.getKey();
-                    for (var rw : wro.get(variable).entrySet()) {
-                        var r = rw.getKey();
-                        var w = rw.getValue();
-                        var t3 = transactions.get(r.getId()).get(r.getSo());
-                        var t1 = transactions.get(w.getId()).get(w.getSo());
-
-                        int i = translator.get(t2);
-                        int j = translator.get(t1);
-                        if(i == j) continue;
-                        if (co.get(i).get(j)) continue;
-                        if (t3.satisfyConstraint(this, rInit, t2, r, variable)) {
-                            co.get(i).set(j, true);
-                        }
-                    }
-                }
-            }
-        }
-
-        return co;
-
+        var tr = transactions.get(r.getId()).get(r.getSo());
+        var tw = transactions.get(w.getId()).get(w.getSo());
+        if(tr.hasTransactionalAxioms()
+           && wroPerTransaction.containsKey(tr)
+           && wroPerTransaction.get(tr).containsKey(variable) &&
+           wroPerTransaction.get(tr).get(variable) != tw) return false;
+        wroPerTransaction.putIfAbsent(tr, new HashMap<>());
+        wroPerTransaction.get(tr).putIfAbsent(variable, tw);
+        return true;
     }
     private HashMap<Transaction, Integer> computeTranslator(){
         int i = 0;
@@ -395,262 +414,9 @@ public class History {
 //$\mathtt{1}_x^r(\co) = \{ t \in T \ | \ (\trans{r}, t)\not\in \co \ \land \ \writeVar{t}{x} \ \land \ \where{r}(\valuewr[\overline{\wro}]{t}{x}) = 1\}$
 // and $\mathtt{0}_x^r(\co) = \{ t \in T \ | \ (\trans{r}, t)\not\in \co \ \land \ \writeVar{t}{x} \ \land \ \where{r}(\valuewr[\overline{\wro}]{t}{x}) = 0\}$. Any witness $h' = \tup{T, \so, \wro'}$
 
-    protected boolean isOneSetEmpty(ArrayList<ArrayList<Boolean>> co, Variable x, ReadEvent r){
-        for(var ses: transactions){
-            for(var t: ses){
-                if(t.isAborted()) continue;
-                var ws = t.getWriteSet();
-                int i = translator.get(transactions.get(r.getId()).get(r.getSo()));
-                int j = translator.get(t);
-                if(!ws.containsKey(x)) continue;
-                var value = ws.get(x).second;
-                if(i == j) continue;
-                if(co.get(i).get(j)) continue;
-                if(r.satisfyWhere(value)) return false;
-            }
-        }
-        return true;
-    }
-
-    protected Set<Transaction> getZeroSet(ArrayList<ArrayList<Boolean>> co, Variable x, ReadEvent r){
-        var set = new HashSet<Transaction>();
-        for(var t : writePerVariable.get(x)){
-            int i = translator.get(transactions.get(r.getId()).get(r.getSo()));
-            int j = translator.get(t);
-            var value = t.getWriteSet().get(x).second;
-            if(i == j) continue;
-            if(co.get(i).get(j)) continue;
-            if(!r.satisfyWhere(value)){
-                set.add(t);
-            }
-        }
-        return set;
-    }
-
-
-
-    //\Let $E_h = \{(r,x) \ | \ r \in \readOp{h}, x \in \Vars. \wro_x^{-1}(r) \ uparrow $ and $\mathtt{1}_r^x(\co) \neq \emptyset\}$
-    protected Set<Pair<ReadEvent, Variable>> getEh(ArrayList<ArrayList<Boolean>> co){
-
-        var eh = new HashSet<Pair<ReadEvent, Variable>>();
-        for(var se: transactions){
-            for(var t: se){
-                for(var e: t){
-                    if(!e.isRead()) continue;
-                    var r = e.getReadEvent();
-                    var tableNames = e.getTableNames();
-                    for(var tableName : tableNames) {
-                        for (var variable : variablePerTable.get(tableName)) {
-                            if(!e.belongsInTable(variable)) continue;
-                            if(!wro.get(variable).containsKey(r) && !isOneSetEmpty(co, variable, r)){
-                                eh.add(new Pair<>(r, variable));
-                            }
-                        }
-                    }
-
-                }
-            }
-        }
-        return eh;
-    }
-
 
 //\Let $X_h = \bigtimes_{(r,x) \in E_h} \mathtt{0}_x^r(\co)$
 
-    /*
-    protected List<List<Pair<Variable, Pair<ReadEvent, Transaction>>>> getXh(ArrayList<ArrayList<Boolean>> co, Set<Pair<ReadEvent, Variable>> eh) {
-        var xh = new ArrayList<ArrayList<Pair<Variable,Pair<ReadEvent,Transaction>>>>();
-        for (var p : eh) {
-            var read = p.first;
-            var variable = p.second;
-            var zeroSet = getZeroSet(co, variable, read);
-            var mappedZS = zeroSet.stream().map(t -> new Pair<>(variable, new Pair<>(read,t))).toList();
-            xh.add(new ArrayList<>(mappedZS));
-        }
-        if(xh.size() == 0){
-            return new ArrayList<>();
-        }
-        else return HistoryUtil.cartesianProduct(xh);
-    }
-     */
-
-    protected List<List<Pair<Variable, Pair<ReadEvent, Transaction>>>> getXh(ArrayList<ArrayList<Boolean>> co, Set<Pair<ReadEvent, Variable>> eh) {
-        var xh = new ArrayList<List<Pair<Variable,Pair<ReadEvent,Transaction>>>>();
-        for (var p : eh) {
-            var read = p.first;
-            var variable = p.second;
-            var zeroSet = getZeroSet(co, variable, read);
-            var mappedZS = zeroSet.stream().map(t -> new Pair<>(variable, new Pair<>(read,t))).toList();
-            if(mappedZS.size() == 0) return new ArrayList<>();
-            xh.add(new ArrayList<>(mappedZS));
-        }
-        return xh;
-    }
-
-
-    //We assume xh.size() == index.size()
-    protected boolean nextSet(List<List<Pair<Variable, Pair<ReadEvent, Transaction>>>> xh, ArrayList<Integer> index){
-
-        for(int i = index.size() - 1; i >= 0; --i){
-            index.set(i, index.get(i)+1);
-
-            if(index.get(i) == xh.get(i).size()){
-                index.set(i, 0);
-            }
-            else return true;
-
-        }
-        return false;
-    }
-
-
-    private ArrayList<ArrayList<Boolean>> computeCOFixpoint(ArrayList<ArrayList<Boolean>> coInit) throws InterruptedException {
-        var co = coInit;
-        int i = 0;
-        do {
-            coInit = co;
-            co = computeCO(coInit);
-            if(Thread.interrupted()) throw new InterruptedException();
-            ++i;
-        }
-        while (!HistoryUtil.equals(co, coInit));
-        LOG.debug("#Iterations COFixpoint: " + i);
-        return co;
-    }
-
-    protected boolean dfsCOAcyclic(ArrayList<ArrayList<Boolean>> co, ArrayList<Integer> color, Integer u){
-        color.set(u,1);
-        for(int v = 0; v < co.get(u).size(); ++v){
-            if(u == v) continue;
-            if(co.get(u).get(v)
-               && color.get(v) == 0){
-                boolean b = dfsCOAcyclic(co, color, v);
-                if(!b) return false;
-
-            }
-            else if(co.get(u).get(v)
-                    && color.get(v) == 1){
-                return false;
-            }
-        }
-        color.set(u,2);
-        return true;
-    }
-
-    protected boolean isCommitOrderAcyclic(ArrayList<ArrayList<Boolean>> co){
-        //0 = not visited, 1 = in process, 2 = finished
-        int n = co.size();
-        ArrayList<Integer> color = new ArrayList<>(Collections.nCopies(n,0));
-        for(int i = 0; i < n; ++i){
-            if(color.get(i) == 0){
-                if(!dfsCOAcyclic(co, color, i)){
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    public boolean checkSOBound(ResultHistory result) throws InterruptedException {
-        long now = System.nanoTime();
-        var soUwr = computeSoUWr();
-        var coInit = HistoryUtil.transitiveClosure(soUwr);
-
-        var co = computeCOFixpoint(coInit);
-        if(Thread.interrupted()) throw new InterruptedException();
-        if(!isCommitOrderAcyclic(co)){
-            LOG.debug("CO is NOT acyclic!");
-            return false;
-        }
-        LOG.debug("CO is acyclic");
-
-        var eh = getEh(co);
-        if(Thread.interrupted()) throw new InterruptedException();
-        var xh = getXh(co, eh);
-        if(Thread.interrupted()) throw new InterruptedException();
-
-
-
-        if(eh.size() != 0 && xh.size() == 0){
-            LOG.debug("No possible extension!");
-            return false;
-        }
-        else if(xh.size() == 0){
-            LOG.debug("Unique CSOB call");
-            return csob(co, new PrefixHistory(this), new HashSet<>());
-        }
-        else{
-            var index = new ArrayList<>(Collections.nCopies(xh.size(),0));
-            int numCsob = 0;
-            LOG.debug("Multiple CSOB calls");
-            do {
-                var h = new History(this);
-                var coH = HistoryUtil.deepclone(co);
-                LOG.debug("Call #" + numCsob);
-                for (int i = 0; i < index.size(); ++i) {
-                    var zeroSet = xh.get(i);
-                    var p = zeroSet.get(index.get(i));
-                    var variable = p.first;
-                    var r = p.second.first;
-                    var w = p.second.second.getWriteSet().get(variable).first;
-                    h.setWR(variable, r, w);
-
-                    int j = translator.get(transactions.get(w.getId()).get(w.getSo()));
-                    int k = translator.get(transactions.get(r.getId()).get(r.getSo()));
-                    if(j != k)
-                        coH.get(j).set(k, true);
-                }
-                coH = computeCOFixpoint(coH);
-                if(isCommitOrderAcyclic(coH)){
-                    if(h.csob(coH, new PrefixHistory(this), new HashSet<>())) {
-                        LOG.debug("Call #" + numCsob + ": consistent!");
-                       return true;
-                   }
-                }
-                else{
-                    LOG.debug("Call #" + numCsob + ": CO is NOT acyclic!");
-                }
-                ++numCsob;
-
-            }while(!Thread.interrupted() && nextSet(xh, index));
-            if(Thread.interrupted()) throw new InterruptedException();
-            return false;
-        }
-    }
-
-    protected ArrayList<ArrayList<Boolean>> computeSoUWr() {
-        var soUwr = HistoryUtil.deepclone(wroTransactions);
-        for(int i = 0; i < soUwr.size(); ++i){
-            for(int j = 0; j < soUwr.get(i).size(); ++j){
-                soUwr.get(i).set(j, soUwr.get(i).get(j) || soTransactions.get(i).get(j));
-            }
-        }
-        return soUwr;
-    }
-
-    private boolean csob(ArrayList<ArrayList<Boolean>> co, PrefixHistory prefix, Set<PrefixHistory> seen) throws InterruptedException {
-        if(prefix.size() == co.size()){
-            return true;
-        }
-        for(var ses: transactions){
-            for(var t: ses){
-                if(Thread.interrupted()) throw new InterruptedException();
-                if(prefix.contains(t)) continue;
-                if(!prefix.isConsistent(co, t)) continue;
-                var ext = prefix.extend(t);
-                if(seen.contains(ext)) continue;
-                if(csob(co, ext, seen)) return true;
-                seen.add(ext);
-            }
-        }
-        return false;
-    }
-
-    public boolean areSORelated(Transaction t1, Transaction t2){
-        var i = translator.get(t1);
-        var j = translator.get(t2);
-        return soTransactions.get(i).get(j);
-    }
 
     public boolean areWRRelated(Transaction t, ReadEvent r){
         var tr = transactions.get(r.getId()).get(r.getSo());
@@ -659,6 +425,11 @@ public class History {
         return wroReadTransactions.get(i).get(j).get(r.getPo());
     }
 
+    public boolean areSORelated(Transaction t1, Transaction t2){
+        var i = translator.get(t1);
+        var j = translator.get(t2);
+        return soTransactions.get(i).get(j);
+    }
 
 
     public boolean areWRRelated(Transaction t1, Transaction t2){
@@ -675,4 +446,23 @@ public class History {
         return areSORelated(t, transactions.get(r.getId()).get(r.getSo())) || areWRRelated(t, r);
     }
 
+    public ArrayList<ArrayList<Boolean>> getWroTransactions() {
+        return wroTransactions;
+    }
+
+    public ArrayList<ArrayList<ArrayList<Boolean>>> getWroReadTransactions() {
+        return wroReadTransactions;
+    }
+
+    public ArrayList<ArrayList<Boolean>> getSoTransactions() {
+        return soTransactions;
+    }
+
+    public Map<String, Set<Variable>> getVariablePerTable() {
+        return variablePerTable;
+    }
+
+    public Map<Variable, Set<Transaction>> getWritePerVariable() {
+        return writePerVariable;
+    }
 }
