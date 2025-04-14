@@ -167,8 +167,8 @@ executeTPCCComparisons() {
 }
 
 executeTPCCSessions
-#executeTPCCTransactions
-#executeTPCCComparisons
+executeTPCCTransactions
+executeTPCCComparisons
 
 
 

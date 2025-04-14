@@ -82,6 +82,7 @@ function create_image() {
     cp -a ../../../artifact-scripts/session-scalability.sh tmp/session-scalability.sh
     cp -a ../../../artifact-scripts/transaction-scalability.sh tmp/transaction-scalability.sh
     cp -a ../../../artifact-scripts/comparison-naive-checksobound.sh tmp/comparison-naive-checksobound.sh
+    cp -a ../../$profile-latest/ tmp/$profile-latest/
     # Modification for mac!
     sed -i '' "s/:-postgres/:-${default_profile}/" tmp/entrypoint.sh
 

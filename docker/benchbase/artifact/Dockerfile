@@ -41,5 +41,8 @@ VOLUME /benchbase/results
 # build-full-image.sh script.
 COPY --chown=containeruser:containergroup . /benchbase/
 
+
+#ENTRYPOINT [ "/bin/bash" ]
+
 ENTRYPOINT ["/benchbase/entrypoint.sh"]
-CMD ["--help"]
+#CMD ["--help"]

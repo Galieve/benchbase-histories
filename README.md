@@ -16,10 +16,10 @@ Our artifact is split into different parts following the architecture of BenchBa
 
 ## Build
 
-To build CheckSOBound, we recommend use the script `docker-build.sh`.
+To build CheckSOBound, we recommend using the script `docker-build.sh`.
 
 ```bash
-bash artifact-scripts/docker-build.sh
+bash docker-build.sh
 ```
 
 This command builds the CheckSOBound on a Docker container and prepares it. The volume of the Docker is /benchbase/results directory. For building it in local, use script `local-build.sh` instead. For more information, we refer to [BenchBase instructions](BenchBase-README.md).
@@ -29,82 +29,55 @@ This command builds the CheckSOBound on a Docker container and prepares it. The 
 
 ---
 
-We include four scripts for running the project: ``smoke-test.sh``, ``session-scala.sh``, ``transaction-scala.sh``, and ``ser-rc-naive-csob.sh``; corresponding to the smoke test, and the first, second and third experiment presented in section 6. It suffices to run them using ``bash`` for obtaining the results.
+We include four scripts in the ``artifact-scripts`` directory  for running the project: ``smoke-test.sh``, ``session-scala.sh``, ``transaction-scala.sh``, and ``ser-rc-naive-csob.sh``; corresponding to the smoke-test, and the first, second and third experiment presented in section 6. It suffices to run them using ``bash`` for obtaining the results.
 
 For example, for executing the smoke test, use:
 ```
-bash smoke-test.sh
+bash artifact-scripts/smoke-test.sh
 ```
 
-Every experiment execute multiple benchmarks and configurations. Each execution is stored in a different folder ``results/testFiles/$benchmark_name/$isolation_configuration/$case``. The executed benchmarks (``$benchmark_name``) either ``tpccHistories``, ``tpccPChistories``or ``twitterHistories``.
-
-
-produce several short `.out` files. It is recommended to read their content either with cat or copying it to the host machine via [`docker cp`](https://docs.docker.com/engine/reference/commandline/cp/).
+The results of each experiment appear in the folder ``results/testFiles/$experiment``.
 
 **Notes**
 
-The time limit set is to 30' per case. It is recommended to be careful when running each script as it may take up to 1 day per script. Some sub-benchmarks are already predefined for having a satisfactory user experience.
+The time limit set is to 60s per case. It is recommended to be careful when running each script as it may take more than 1 day to execute all experiments. The smoke-test is already predefined for having a better user experience. As the scripts are not fully run in Docker, please use `bash` over `sh`.
+
+### Smoke test
+
+The smoke test executes a reduced version of the other three experiments. After running the smoke test, three folders (`Smoke-Test-Sessions`, `Smoke-Test-Transactions` and `Smoke-Test-Comparisons`) are created, each with one sub-folder per benchmark (`twitter`, `tpcc` and `tpccPC` when applicable). In the case of `Smoke-Test-Sessions` and `Smoke-Test-Transactions`, each benchmark folder contains one sub-folder per isolation configuration (`SER`, `SI`, `RC`, `SER+RC`, `SI+RC`); while in the other case, only one sub-folder, (`Naive-vs-CheckSOBound`). At the end of the execution, each of these sub-folders contains two csvs. One, describing all information about all concerning executions and a second one, summarizing the executions showing the average result per case. In addition, in the case of the experiments `Smoke-Test-Sessions`, `Smoke-Test-Transactions` each benchmark folder  (`twitter`, `tpcc` and `tpccPC`) contain a `.png` describing the evolution of Algorithm 3 runtime (corresponding to Figures 5 & 6).
+
+More information can be found in the file [smoke-test.sh](artifact-scripts/smoke-test.sh).
 
 
-### First experiment: application scalability
 
-The following command shall be run. Its outcome can be found in "bin/benchmarks/application-scalability" folder.
 
-```
-bash bench-application-scalability.sh
-```
+### First and Second Experiment: Session and Transaction Scalability
 
-It will produce 5 folders ("courseware/", "shoppingCart/", "tpcc/", "twitter/" and "wikipedia/"), each with 5 subfolders (one per number of sessions in the benchmark). Each subfolder will contain 7 .out files, one per isolation level treated (Appendix F, Table F1).
-
-#### Demo version
-
-One can run the command below to execute a smaller benchmark where only the first two rows of Table F1 are executed. The results of this test case can be found in `bin/benchmarks/demo-application-scalability`.
+The following commands shall be run for obtaining their correspondent outcome. As in the smoke test, the result of the execution can be found in the folder `results/testFiles`.
 
 ```
-bash bench-demo-app.sh
+bash artifact-scripts/session-scalability.sh
 ```
 
-### Second and third experiment: session and transaction scalability
-
-The following commands shall be run:
-
-- Second experiment. Its outcome can be found in "bin/benchmarks/session-scalability" folder:
-
 ```
-bash bench-session-scalability.sh
+bash artifact-scripts/transaction-scalability.sh
 ```
 
-- Third experiment. Its outcome can be found in "bin/benchmarks/transaction-scalability" folder:
+
+### Third Experiment: Baseline Comparison
+
+
+The following command shall be run; the result of the execution can be found in the folder `results/testFiles`.
 
 ```
-bash bench-transaction-scalability.sh
-```
-
-Both of them will produce 2 folders ("tpcc/" and "wikipedia/"), each with 5 subfolders (one per study case). Inside them, 5 folders can be found; obtaining in total a system of 50 folders.
-For example, one of those final directories will be `bin/benchmarks/transaction-scalability/tpcc/case1/2-transactions-per-session`.
-
-Each final folder will contain 1 .out file, corresponding with a cell in Appendix F, Table F2 or Appendix F, Table F3.
-
-
-#### Demo version
-
-One can run the command below to execute a smaller benchmark where only the first two rows and first three columns of Table F2 (respectively F3) are executed. The results of this test case can be found in `bin/benchmarks/demo-session-scalability` (respectively `bin/benchmarks/demo-transaction-scalability`).
-
-**Second experiment:**
-```
-bash bench-demo-session.sh
-```
-
-**Third experiment:**
-```
-bash bench-demo-transaction.sh
+bash artifact-scripts/comparison-naive-checksobound.sh
 ```
 
 ## Do it yourself!
 
 ---
 
-If the reader wants to test their own programs, we recommend to read both the [`JPF-README`](JPF-README.md), that explains the usage of JPF, and the [`DIY-README`](DIY-README.md) that summarizes the new features that TrJPF brings.
+If the reader wants to test their own programs, we recommend to read both the [BenchBase-README](BenchBase-README.md), that explains the usage of BenchBase, and the [DIY-README](DIY-README.md) that summarizes the new features that CheckSOBound brings.
 
 ## Requirements
 
@@ -113,6 +86,9 @@ If the reader wants to test their own programs, we recommend to read both the [`
 This artifact was tested on a Mac OS. We recommend using a Mac/Linux OS version with updated software.
 
 Docker is required. Please install it for your OS. The necessary documentation is available [here](https://docs.docker.com/get-docker).
+
+
+Currently, our scripts are not fully integrated in Docker. The user may require installing xmlstarlet and python3.
 
 <!---
 This artifact was tested on a Linux OS. We recommend using a new Unix/Linux OS version with updated software.
