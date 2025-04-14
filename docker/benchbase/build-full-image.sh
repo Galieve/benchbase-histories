@@ -78,7 +78,8 @@ function create_image() {
     # Make a copy of the entrypoint script that changes the default profile to
     # execute for singleton images.
     cp -a entrypoint.sh tmp/entrypoint.sh
-    sed -i "s/:-postgres/:-${default_profile}/" tmp/entrypoint.sh
+    # Modification for mac!
+    sed -i '' "s/:-postgres/:-${default_profile}/" tmp/entrypoint.sh
 
     # Adjust the image tags.
     local image_name='benchbase'

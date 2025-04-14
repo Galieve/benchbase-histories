@@ -2,14 +2,14 @@
 # shellcheck disable=SC2164
 cd target/benchbase-postgres
 # shellcheck disable=SC2164
-#mkdir -p experiments
-#mkdir -p results/testFiles
+mkdir -p experiments
+mkdir -p results/testFiles
 
 # shellcheck disable=SC2103
 
 # shellcheck disable=SC2103
 
-ENDSESSIONS=8
+ENDSESSIONS=5
 EXAMPLES=5
 executeBenchmark () {
 
@@ -22,18 +22,13 @@ executeBenchmark () {
     local -a options=("${!4}")
     local -a isolations=("${!5}")
 
-    echo "the options(EB) size is:" ${#options[@]}
-    echo "the isolation(EB) size is:" ${#isolations[@]}
-
-
 
     #rm -rf "experiments/${name}/${isolationCase}"
 
     mkdir -p "experiments/${optionsFolderName}/${name}/${isolationCase}"
 
-    for i in $(seq 6 $ENDSESSIONS); do
+    for i in $(seq 1 $ENDSESSIONS); do
 
-        echo "experiments/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml"
         cp "config/postgres/sample_${name}_config.xml" "experiments/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml"
         xmlstarlet ed -L -u "/parameters/works/work/rate" -v "10" "experiments/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml"
         xmlstarlet ed -L -u "/parameters/terminals" -v "$i" "experiments/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml"
@@ -55,6 +50,7 @@ executeBenchmark () {
             touch "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})/output.out"
 
             echo java -jar benchbase.jar -b "${name}" -c "experiments/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml" -d "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})" "${options[@]}" --create=true --load=true --execute=true
+            echo
             java &> "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})/output.out" -jar benchbase.jar -b "${name}" -c "experiments/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml" -d "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})" "${options[@]}" --create=true --load=true --execute=true
 
         done
@@ -71,11 +67,9 @@ executeTwitter() {
 
     isolationMap=("GetTweetHistory" "TRANSACTION_REPEATABLE_READ" "GetTweetsFromFollowingHistory" "TRANSACTION_REPEATABLE_READ" "GetFollowersHistory" "TRANSACTION_REPEATABLE_READ" "GetUserTweetsHistory" "TRANSACTION_REPEATABLE_READ" "InsertTweetHistory" "TRANSACTION_REPEATABLE_READ")
 
-
     executeBenchmark "twitterHistories" "Session-Scalability" "SI" options[@] isolationMap[@]
 
     isolationMap=("GetTweetHistory" "TRANSACTION_READ_COMMITTED" "GetTweetsFromFollowingHistory" "TRANSACTION_READ_COMMITTED" "GetFollowersHistory" "TRANSACTION_READ_COMMITTED" "GetUserTweetsHistory" "TRANSACTION_READ_COMMITTED" "InsertTweetHistory" "TRANSACTION_READ_COMMITTED")
-
 
     executeBenchmark "twitterHistories" "Session-Scalability" "RC" options[@] isolationMap[@]
 
@@ -93,13 +87,11 @@ executeTPCC() {
     local -a options=("-ch" "CSOB")
     local -a isolationMap=("OrderStatusHistory" "TRANSACTION_SERIALIZABLE" "DeliveryHistory" "TRANSACTION_SERIALIZABLE" "StockLevelHistory" "TRANSACTION_SERIALIZABLE" "NewOrderHistory" "TRANSACTION_SERIALIZABLE" "PaymentHistory" "TRANSACTION_SERIALIZABLE")
 
-    echo "the options(ETPCC) size is: " ${#options[@]}
-    echo "the isolation(ETPCC) size is: " ${#isolationMap[@]}
     executeBenchmark "tpccHistories" "Session-Scalability" "SER" options[@] isolationMap[@]
 
-    #isolationMap=("OrderStatusHistory" "TRANSACTION_REPEATABLE_READ" "DeliveryHistory" "TRANSACTION_REPEATABLE_READ" "StockLevelHistory" "TRANSACTION_REPEATABLE_READ" "NewOrderHistory" "TRANSACTION_REPEATABLE_READ" "PaymentHistory" "TRANSACTION_REPEATABLE_READ")
+    isolationMap=("OrderStatusHistory" "TRANSACTION_REPEATABLE_READ" "DeliveryHistory" "TRANSACTION_REPEATABLE_READ" "StockLevelHistory" "TRANSACTION_REPEATABLE_READ" "NewOrderHistory" "TRANSACTION_REPEATABLE_READ" "PaymentHistory" "TRANSACTION_REPEATABLE_READ")
 
-    #executeBenchmark "tpccHistories" "Session-Scalability" "SI" options[@] isolationMap[@]
+    executeBenchmark "tpccHistories" "Session-Scalability" "SI" options[@] isolationMap[@]
 
     isolationMap=("OrderStatusHistory" "TRANSACTION_READ_COMMITTED" "DeliveryHistory" "TRANSACTION_READ_COMMITTED" "StockLevelHistory" "TRANSACTION_READ_COMMITTED" "NewOrderHistory" "TRANSACTION_READ_COMMITTED" "PaymentHistory" "TRANSACTION_READ_COMMITTED")
 
@@ -109,9 +101,9 @@ executeTPCC() {
 
     executeBenchmark "tpccHistories" "Session-Scalability" "SI+RC" options[@] isolationMap[@]
 
-    #isolationMap=("OrderStatusHistory" "TRANSACTION_READ_COMMITTED" "DeliveryHistory" "TRANSACTION_READ_COMMITTED" "StockLevelHistory" "TRANSACTION_READ_COMMITTED" "NewOrderHistory" "TRANSACTION_SERIALIZABLE" "PaymentHistory" "TRANSACTION_SERIALIZABLE")
+    isolationMap=("OrderStatusHistory" "TRANSACTION_READ_COMMITTED" "DeliveryHistory" "TRANSACTION_READ_COMMITTED" "StockLevelHistory" "TRANSACTION_READ_COMMITTED" "NewOrderHistory" "TRANSACTION_SERIALIZABLE" "PaymentHistory" "TRANSACTION_SERIALIZABLE")
 
-    #executeBenchmark "tpccHistories" "Test-Session-Scalability" "SER+RC" options[@] isolationMap[@]
+    executeBenchmark "tpccHistories" "Session-Scalability" "SER+RC" options[@] isolationMap[@]
 }
 
 executeTPCCPC() {
@@ -137,6 +129,6 @@ executeTPCCPC() {
     executeBenchmark "tpccPCHistories" "Session-Scalability" "SER+RC" options[@] isolationMap[@]
 }
 
-#executeTwitter
+executeTwitter
 executeTPCC
-#executeTPCCPC
+executeTPCCPC

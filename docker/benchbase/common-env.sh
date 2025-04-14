@@ -30,7 +30,13 @@ CONTAINERUSER_UID="${CONTAINERUSER_UID:-$UID}"
 if [ "$CONTAINERUSER_UID" -eq 0 ] && [ -n "${SUDO_UID:-}" ]; then
     CONTAINERUSER_UID="$SUDO_UID"
 fi
-CONTAINERUSER_GID=${CONTAINERUSER_GID:-$(getent passwd "$CONTAINERUSER_UID" | cut -d: -f4)}
+if [[ $OSTYPE == 'darwin'* ]]; then
+    CONTAINERUSER_GID=${CONTAINERUSER_GID:-$(dscacheutil -q user -a uid "$CONTAINERUSER_UID" | sed -n '4{p;q;}' | cut -d ' ' -f2)}
+    #CONTAINERUSER_GID=${CONTAINERUSER_GID:-$(dscl . -search /Users UniqueID "$CONTAINERUSER_UID" | cut -d: -f4)}
+else
+    CONTAINERUSER_GID=${CONTAINERUSER_GID:-$(getent passwd "$CONTAINERUSER_UID" | cut -d: -f4)}
+fi
+#CONTAINERUSER_GID=${CONTAINERUSER_GID:-$(getent passwd "$CONTAINERUSER_UID" | cut -d: -f4)}
 if [ -z "$CONTAINERUSER_GID" ]; then
     echo "WARNING: missing CONTAINERUSER_GID." >&2
 fi
@@ -39,6 +45,8 @@ if [[ "$0" == *-full-image.sh ]]; then
     imagename='benchbase'
 elif [[ "$0" == *-dev-image.sh ]]; then
     imagename='benchbase-dev'
+elif [[ "$0" == *-artifact-image.sh ]]; then
+    imagename='benchbase-artifact'
 else
     echo "ERROR: Unhandled calling script name: '$0'!" >&2
     exit 1

@@ -1,19 +1,19 @@
 <?xml version="1.0"?>
 <plugins>
     <plugin name="tpcc">com.oltpbenchmark.benchmarks.tpcc.TPCCBenchmark</plugin>
-    <plugin name="tpccHistories">com.oltpbenchmark.benchmarks.tpccHistories.TPCCBenchmarkHistory</plugin>
-    <plugin name="tpccPCHistories">com.oltpbenchmark.benchmarks.tpccPCHistories.TPCCPCBenchmarkHistory</plugin>
+    <plugin name="tpccHistories">com.oltpbenchmark.benchmarksHistory.tpccHistories.TPCCBenchmarkHistory</plugin>
+    <plugin name="tpccPCHistories">com.oltpbenchmark.benchmarksHistory.tpccPCHistories.TPCCPCBenchmarkHistory</plugin>
     <plugin name="tpch">com.oltpbenchmark.benchmarks.tpch.TPCHBenchmark</plugin>
     <plugin name="tatp">com.oltpbenchmark.benchmarks.tatp.TATPBenchmark</plugin>
     <plugin name="wikipedia">com.oltpbenchmark.benchmarks.wikipedia.WikipediaBenchmark</plugin>
     <plugin name="resourcestresser">com.oltpbenchmark.benchmarks.resourcestresser.ResourceStresserBenchmark</plugin>
     <plugin name="twitter">com.oltpbenchmark.benchmarks.twitter.TwitterBenchmark</plugin>
-    <plugin name="twitterFull">com.oltpbenchmark.benchmarks.twitterFull.TwitterBenchmarkFull</plugin>
-    <plugin name="twitterHistories">com.oltpbenchmark.benchmarks.twitterHistories.TwitterBenchmarkHistory</plugin>
+    <plugin name="twitterFull">com.oltpbenchmark.benchmarksHistory.twitterFull.TwitterBenchmarkFull</plugin>
+    <plugin name="twitterHistories">com.oltpbenchmark.benchmarksHistory.twitterHistories.TwitterBenchmarkHistory</plugin>
     <plugin name="epinions">com.oltpbenchmark.benchmarks.epinions.EpinionsBenchmark</plugin>
     <plugin name="ycsb">com.oltpbenchmark.benchmarks.ycsb.YCSBBenchmark</plugin>
     <plugin name="seats">com.oltpbenchmark.benchmarks.seats.SEATSBenchmark</plugin>
-    <plugin name="seatsHistories">com.oltpbenchmark.benchmarks.seatsHistories.SEATSBenchmarkHistory</plugin>
+    <plugin name="seatsHistories">com.oltpbenchmark.benchmarksHistory.seatsHistories.SEATSBenchmarkHistory</plugin>
     <plugin name="auctionmark">com.oltpbenchmark.benchmarks.auctionmark.AuctionMarkBenchmark</plugin>
     <plugin name="chbenchmark">com.oltpbenchmark.benchmarks.chbenchmark.CHBenCHmark</plugin>
     <plugin name="voter">com.oltpbenchmark.benchmarks.voter.VoterBenchmark</plugin>

@@ -1,19 +1,22 @@
-[`Back to init`](../../README.md)
+[Back to init](../../README.md)
 
 ## Main code
 
+This directory contains the main part of the code of both BenchBase project and CSOB artifact. For distinguishing our contribution from the source code of BenchBase, our code is contained on directories whose name contain the suffix `History`.
+
 ### Structure
 
-The code is structured in two layers:
+The code is structured in three layers:
 
-- JPF code: [`gov directory`](gov/). The code in this folder is essentially the same provided by JPF. It includes the VM class family (Virtual Machine) that execute every bytecode instruction and update the local memory consequently. For more information read [`JPF README`](../../JPF-README.md).
+- [Assembly code](assembly/): The code in this folder is the same provided by BenchBase; we refer to the original BenchBase project for more information.
 
-- TrJPF code: [`country directory`](country/). Extends several JPF classes in the gov directory for using them in a transactional context.
+- [Java code](java/com/oltpbenchmark/): It contains the Java source code. The main class corresponds to [DBWorkloadHistory](java/com/oltpbenchmark/DBWorkloadHistory.java).
 
-    - Bytecode: Several Java instructions modified to be interpreted as database extern calls instead of JVM standard interpretation.
-    - Database: Auxiliary classes for the algorithm. Include the or definition (Oracle.java) and the database class (Database.java). Database is used by both TrEventRegister.java to add new events into the database and by TrDFSearch.java to obtain the next alternative to explore.
-    - Events: Package in charge of defining what is an event and creating them when a database call has been carried out.
-    - Histories: Definition of several isolation levels in terms of history. They implement a method "isConsistent".
-    - Report: Classes to output the outcome of our procedure.
-    - Search: DFS iterative procedures. TrDFSearch.java implements EXPLORE(I_0, I) while NaiveTrDFSearch.java implements a Naive DFS without DPOR techniques.
+  - [History directory](java/com/oltpbenchmark/historyModelHistory): Definition of events, histories and isolation levels as in Sections 2 and 3.
+  - [Algorithm directory](java/com/oltpbenchmark/algorithmsHistory): Includes the implementation of [CheckConsistency algorithm](java/com/oltpbenchmark/algorithmsHistory/algorithms/CSOB.java) (Algorithm 3) as well the [naive algorithm](java/com/oltpbenchmark/algorithmsHistory/algorithms/NaiveCheckClientConsistency.java) (see Section 6).
 
+  - [Benchmark directory](java/com/oltpbenchmark/benchmarksHistory): Include Twitter, TPC-C and TPC-C PC benchmarks (see Section 6).
+  - [Util directory](java/com/oltpbenchmark/utilHistory): Miscellaneous package for utilities
+
+
+- [Resources code](resources/): Include the definition of the PostgreSQL database of each benchmark, including the data type of each column, table and additional database structures such as indexes. BenchBase resources showcase how to extend to other database providers and how to initialize the database from a custom state.

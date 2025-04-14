@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # shellcheck disable=SC2164
 cd target/benchbase-postgres
 # shellcheck disable=SC2164
@@ -9,7 +11,7 @@ mkdir -p results/testFiles
 # shellcheck disable=SC2103
 
 
-END=50
+END=20
 EXAMPLES=5
 
 executeBenchmark () {
@@ -23,8 +25,6 @@ executeBenchmark () {
     local -n options=$4
     local -n isolations=$5
 
-
-    #rm -rf "experiments/${name}/${isolationCase}"
     mkdir -p "experiments/${optionsFolderName}/${name}/${isolationCase}"
 
     for i in $(seq 1 $END); do
@@ -47,7 +47,7 @@ executeBenchmark () {
             echo java -jar benchbase.jar -b "${name}" -c "experiments/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml" -d "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})" "${options[@]}" --create=true --load=true --execute=true
             echo
             java &> "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})/output.out" -jar benchbase.jar -b "${name}" -c "experiments/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml" -d "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})" "${options[@]}" --create=true --load=true --execute=true
-
+            exit 1
         done
     done
 
@@ -60,7 +60,6 @@ executeTwitter() {
     executeBenchmark "twitterHistories" "Transaction-Scalability" "SER" "${options[@]}" "${isolationMap[@]}"
 
     isolationMap=("GetTweetHistory" "TRANSACTION_REPEATABLE_READ" "GetTweetsFromFollowingHistory" "TRANSACTION_REPEATABLE_READ" "GetFollowersHistory" "TRANSACTION_REPEATABLE_READ" "GetUserTweetsHistory" "TRANSACTION_REPEATABLE_READ" "InsertTweetHistory" "TRANSACTION_REPEATABLE_READ")
-
 
     executeBenchmark "twitterHistories" "Transaction-Scalability" "SI" "${options[@]}" "${isolationMap[@]}"
 
@@ -124,6 +123,6 @@ executeTPCCPC() {
     executeBenchmark "tpccPCHistories" "Transaction-Scalability" "SER+RC" "${options[@]}" "${isolationMap[@]}"
 }
 
-#executeTwitter
-#executeTPCC
+executeTwitter
+executeTPCC
 executeTPCCPC

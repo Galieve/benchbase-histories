@@ -11,7 +11,7 @@ mkdir -p results/testFiles
 # shellcheck disable=SC2103
 
 
-END=20
+END=10
 EXAMPLES=5
 executeBenchmark () {
 
@@ -53,24 +53,14 @@ executeBenchmark () {
     done
 
 }
-#executeBenchmark "twitter" "SER+RC" "GetTweetFull" "TRANSACTION_READ_COMMITTED" "GetTweetsFromFollowingFull" "TRANSACTION_READ_COMMITTED" "GetFollowersFull" "TRANSACTION_READ_COMMITTED" "GetUserTweetsFull" "TRANSACTION_READ_COMMITTED" "InsertTweetFull" "TRANSACTION_SERIALIZABLE"
-#executeBenchmark "twitter" "SI+RC" "GetTweetFull" "TRANSACTION_READ_COMMITTED" "GetTweetsFromFollowingFull" "TRANSACTION_READ_COMMITTED" "GetFollowersFull" "TRANSACTION_READ_COMMITTED" "GetUserTweetsFull" "TRANSACTION_READ_COMMITTED" "InsertTweetFull" "TRANSACTION_REPEATABLE_READ"
+
 declare -a options=("-ch" "\"Naive, CSOB\"" "-di" "\"GetTweetHistory TRANSACTION_SERIALIZABLE GetTweetsFromFollowingHistory TRANSACTION_SERIALIZABLE GetFollowersHistory TRANSACTION_SERIALIZABLE GetUserTweetsHistory TRANSACTION_SERIALIZABLE InsertTweetHistory TRANSACTION_SERIALIZABLE\"")
 declare -a isolations=("GetTweetHistory" "TRANSACTION_READ_COMMITTED" "GetTweetsFromFollowingHistory" "TRANSACTION_READ_COMMITTED" "GetFollowersHistory" "TRANSACTION_READ_COMMITTED" "GetUserTweetsHistory" "TRANSACTION_READ_COMMITTED" "InsertTweetHistory" "TRANSACTION_READ_COMMITTED")
 
 executeBenchmark "twitterHistories" "Invalid" "Naive-vs-CheckSOBound" "${options[@]}" "${isolations[@]}"
-
-#options=("-ch" "CSOB" "-di" "\"GetTweetHistory TRANSACTION_SERIALIZABLE GetTweetsFromFollowingHistory TRANSACTION_SERIALIZABLE GetFollowersHistory TRANSACTION_SERIALIZABLE GetUserTweetsHistory TRANSACTION_SERIALIZABLE InsertTweetHistory TRANSACTION_SERIALIZABLE\"")
-
-
-#executeBenchmark "twitterHistories""Invalid" "CheckSOBound" "${options[@]}" "${isolations[@]}"
 
 options=("-ch" "\"Naive, CSOB\"" "-di" "\"OrderStatusHistory TRANSACTION_SERIALIZABLE DeliveryHistory TRANSACTION_SERIALIZABLE StockLevelHistory TRANSACTION_SERIALIZABLE NewOrderHistory TRANSACTION_SERIALIZABLE PaymentHistory TRANSACTION_SERIALIZABLE\"")
 isolations=("OrderStatusHistory" "TRANSACTION_READ_COMMITTED" "DeliveryHistory" "TRANSACTION_READ_COMMITTED" "StockLevelHistory" "TRANSACTION_READ_COMMITTED" "NewOrderHistory" "TRANSACTION_READ_COMMITTED" "PaymentHistory" "TRANSACTION_READ_COMMITTED")
 
 
 executeBenchmark "tpccHistories" "Invalid" "Naive-vs-CheckSOBound" "${options[@]}" "${isolations[@]}"
-
-#options=("-ch" "CSOB" "-di" "\"OrderStatusHistory TRANSACTION_SERIALIZABLE DeliveryHistory TRANSACTION_SERIALIZABLE StockLevelHistory TRANSACTION_SERIALIZABLE NewOrderHistory TRANSACTION_SERIALIZABLE PaymentHistory TRANSACTION_SERIALIZABLE\"")
-
-#executeBenchmark "tpccHistories" "Invalid" "CheckSOBound" "${options[@]}" "${isolations[@]}"

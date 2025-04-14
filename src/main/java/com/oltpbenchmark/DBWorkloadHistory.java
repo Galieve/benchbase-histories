@@ -18,14 +18,16 @@
 
 package com.oltpbenchmark;
 
+import com.oltpbenchmark.algorithmsHistory.algorithms.ConsistencyChecker;
+import com.oltpbenchmark.algorithmsHistory.algorithms.ConsistencyCheckerFactory;
 import com.oltpbenchmark.api.BenchmarkModule;
 import com.oltpbenchmark.api.TransactionType;
 import com.oltpbenchmark.api.TransactionTypes;
 import com.oltpbenchmark.api.Worker;
-import com.oltpbenchmark.apiHistory.*;
-import com.oltpbenchmark.apiHistory.algorithms.*;
-import com.oltpbenchmark.apiHistory.events.Transaction;
-import com.oltpbenchmark.apiHistory.isolationLevels.IsolationLevel;
+import com.oltpbenchmark.historyModelHistory.*;
+import com.oltpbenchmark.algorithmsHistory.algorithms.*;
+import com.oltpbenchmark.historyModelHistory.events.Transaction;
+import com.oltpbenchmark.historyModelHistory.isolationLevels.IsolationLevel;
 import com.oltpbenchmark.types.DatabaseType;
 import com.oltpbenchmark.util.*;
 import org.apache.commons.cli.*;
@@ -58,6 +60,7 @@ public class DBWorkloadHistory extends DBWorkload{
      * @throws Exception
      */
     public static void main(String[] args) throws Exception {
+
 
         // create the command line parser
         CommandLineParser parser = new DefaultParser();
@@ -501,16 +504,16 @@ public class DBWorkloadHistory extends DBWorkload{
                 }
 
                  */
+                if (argsLine.hasOption("ch")) {
+                    var checkerOpt = argsLine.getOptionValue("ch").trim().split(",");
+                    for (var opt : checkerOpt) {
+                        opt = opt.trim();
+                        LOG.info("Evaluating history with algorithm " + opt + "...");
+                        var checker = ConsistencyCheckerFactory.getChecker(opt);
+                        var results = evaluateHistory(transactions, checker, argsLine);
+                        writeOutputHistory(results, opt, argsLine);
 
-
-                var checkerOpt = argsLine.getOptionValue("ch").trim().split(",");
-                for(var opt : checkerOpt){
-                    opt = opt.trim();
-                    LOG.info("Evaluating history with algorithm "+ opt + "...");
-                    var checker = ConsistencyCheckerFactory.getChecker(opt);
-                    var results = evaluateHistory(transactions, checker, argsLine);
-                    writeOutputHistory(results, opt, argsLine);
-
+                    }
                 }
 
 
@@ -574,8 +577,10 @@ public class DBWorkloadHistory extends DBWorkload{
 
         var h = new History(transactions);
         if(argsLine.hasOption("di")){
-            var ops = argsLine.getOptionValue("di").split(" ");
+            var ops = argsLine.getOptionValue("di").split(",");
             var maps = new HashMap<String, String>();
+            LOG.info(argsLine.getOptionValue("di"));
+            LOG.info(Arrays.toString(ops));
             for(int i = 0; i < ops.length; i+=2){
                 maps.put(ops[i], ops[i+1]);
             }
@@ -618,7 +623,6 @@ public class DBWorkloadHistory extends DBWorkload{
 
         Future<Object> future = executor.submit(task);
         try {
-            //task.call();
             Object result = future.get(time, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             r.setTimeout(true);

@@ -31,7 +31,7 @@ def get_path_file(filename, subfolder=""):
 
 
 def set_source_dir():
-    os.chdir(os.path.expanduser("../target/benchbase-postgres"))
+    os.chdir(os.path.expanduser(".."))
 
 
 def get_path(folder):
@@ -91,9 +91,8 @@ def plot_statistics(folder, name, name_plot, fig_name, n):
     return
 
 
-def plot_benchmark(folder, name, name_plot, fig_name, x_label, n):
-    isolations = ['SER', 'RC', 'SI+RC']
-    #isolations = ['SER', 'SI', 'RC', 'SER+RC', 'SI+RC']
+def plot_benchmark(folder, name, isolations, name_plot, fig_name, x_label, n):
+
 
     df_all = pd.DataFrame()
 
@@ -285,18 +284,6 @@ if __name__ == "__main__":
 
     set_source_dir()
 
-    # for i in range(1, len(sys.argv), 3):
-    # name = sys.argv[i]
-    # isolation = sys.argv[i + 1]
-    # sessions = sys.argv[i + 2]
-    # folder = "results/testFiles/" + name + "/" + isolation +"/"
-
-    # calculate_parameters(mode, labels)
-    # plot_depending_on_mode(mode)
-    # plot_curve(folder, name, isolation, sessions)
-    # plot_timeout(folder, name, isolation, sessions)
-    # plot_oos(folder, name, isolation, sessions)
-
     print_names = {'twitter': 'Twitter',
                    'tpcc': 'TPC-C',
                    'tpccPC': 'TPC-C PC',
@@ -312,19 +299,11 @@ if __name__ == "__main__":
 
     benchmark = ['Transaction-Scalability', 'Session-Scalability']
 
-    for i in range(1, len(sys.argv), 2):
-
+    for i in range(1, len(sys.argv), 4):
         name = sys.argv[i]
-        sessions = sys.argv[i + 1]
-        folder = "results/testFiles/" + 'Transaction-Scalability' + "/" + name + "Histories/"
+        case = sys.argv[i+1]
+        isolations = sys.argv[i + 2].split(',')
+        sessions = sys.argv[i + 3]
+        folder = "results/testFiles/" + case + "/" + name + "Histories/"
 
-        # plot_timeout_oos(folder, name, sessions, True)
-        # plot_timeout_oos(folder, name, sessions, False)
-
-        #plot_benchmark(folder, name, print_names[name], figures_names[name] + '-scala-transactions', 'Transactions per session', sessions)
-        #plot_statistics(folder, name, print_names[name], figures_names[name], sessions)
-
-        folder = "results/testFiles/" + 'Session-Scalability' + "/" + name + "Histories/"
-
-        plot_benchmark(folder, name, print_names[name], figures_names[name] + '-scala-sessions', 'Sessions', sessions)
-        #plot_statistics(folder_sess, name, print_names[name], figures_names[name] + '-sessions', sessions)
+        plot_benchmark(folder, name, isolations, print_names[name], figures_names[name] + '-scala-sessions', 'Sessions', sessions)

@@ -3,40 +3,43 @@
 
 ---
 
-This repository contains the software artifact that supports the CAV'25 submission on "_On the Complexity of Checking Mixed Isolation Levels for SQL Transactions_". Checking SO-Bounded database executions (CSOB) is an extension of [`BenchBase`](BenchBase-README.md) capable to test whether a database isolation level implementation conforms with respect to their specifications.
+This repository contains the software artifact that supports the CAV'25 submission on "_On the Complexity of Checking Mixed Isolation Levels for SQL Transactions_". Checking SO-Bounded database executions (CheckSOBound) is an extension of BenchBase capable to test whether a database isolation level implementation conforms with respect to their specifications. We encourage the reviewers to read the [BenchBase README](BenchBase-README.md).
 
 Our artifact is split into different parts following the architecture of BenchBase. The main ones include:
 
-- The directory [`src/main`](src/main/README.md) contains the main source code, including JPF and TrJPF.
-- The directory [`src/examples`](src/examples/README.md) contains both the API database along with the source code that describe the benchmarks in section 7.2 (Courseware, ShoppingCart, TPC-C, Twitter and Wikipedia).
-- The directory [`src/benchmarks`](src/benchmarks/README.md) contains the parameters that define clients tested in section 7.3 and the initial state of the database in each execution. Clients are instantiation of code from examples directory according to adequate parameters.
-- The directory [`bin/benchmarks`](bin/benchmarks/README.md) will contain the output files after each execution.
-- Configuration file [`jpf.properties`](jpf.properties), including the isolation levels, search mode, output configuration, client APIs to take into account, etc... Configuration parameters can be modified
+- The directory `src/main` contains the main source code, including the BenchBase project and the CheckSOBound extension. See more information about the source code in this [README file](src/main/README.md).
 
+- The directory `config` contains a skeleton of the parameters employed for each benchmark.
+- The directory `docker` contains information about generating a benchmark for docker using BenchBase.
+- The directory `target/benchbase-postgres` will contain the compiled version of the source code. The directory `target/benchbase-postgres/results` will contain the results of the experiment.
+- The directory `data` contains additional data used for BenchBase and CheckSOBound benchmarks.
 
 ## Build
 
----
+To build CheckSOBound, we recommend use the script `docker-build.sh`.
 
-For building, simply run the following:
+```bash
+bash artifact-scripts/docker-build.sh
+```
 
-```
-docker build -t tr-jpf:latest .
-```
+This command builds the CheckSOBound on a Docker container and prepares it. The volume of the Docker is /benchbase/results directory. For building it in local, use script `local-build.sh` instead. For more information, we refer to [BenchBase instructions](BenchBase-README.md).
+
 
 ## Run
 
 ---
 
-The three experiments in section 7.3 have an associated script. It suffices to run it for obtaining the results. For a detailed description about the design, input or output of the experiments check the links above.
+We include four scripts for running the project: ``smoke-test.sh``, ``session-scala.sh``, ``transaction-scala.sh``, and ``ser-rc-naive-csob.sh``; corresponding to the smoke test, and the first, second and third experiment presented in section 6. It suffices to run them using ``bash`` for obtaining the results.
 
-The following command shall be run before executing any experiment. It produces the container where our experiments will be run.
-
+For example, for executing the smoke test, use:
 ```
-docker run -it tr-jpf:latest bash
+bash smoke-test.sh
 ```
 
-Every experiment produce several short `.out` files. It is recommended to read their content either with cat or copying it to the host machine via [`docker cp`](https://docs.docker.com/engine/reference/commandline/cp/).
+Every experiment execute multiple benchmarks and configurations. Each execution is stored in a different folder ``results/testFiles/$benchmark_name/$isolation_configuration/$case``. The executed benchmarks (``$benchmark_name``) either ``tpccHistories``, ``tpccPChistories``or ``twitterHistories``.
+
+
+produce several short `.out` files. It is recommended to read their content either with cat or copying it to the host machine via [`docker cp`](https://docs.docker.com/engine/reference/commandline/cp/).
 
 **Notes**
 

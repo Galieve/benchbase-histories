@@ -22,9 +22,6 @@ import com.oltpbenchmark.api.BenchmarkModule;
 import com.oltpbenchmark.api.TransactionType;
 import com.oltpbenchmark.api.TransactionTypes;
 import com.oltpbenchmark.api.Worker;
-import com.oltpbenchmark.apiHistory.History;
-import com.oltpbenchmark.apiHistory.WorkerHistory;
-import com.oltpbenchmark.apiHistory.events.Transaction;
 import com.oltpbenchmark.types.DatabaseType;
 import com.oltpbenchmark.util.*;
 import org.apache.commons.cli.*;
@@ -44,6 +41,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -505,6 +504,11 @@ public class DBWorkload {
     }
 
     public static XMLConfiguration buildConfiguration(String filename) throws ConfigurationException {
+        System.out.println("Working Directory = " + System.getProperty("user.dir"));
+        System.out.println(filename);
+        Path path = Paths.get(filename);
+        Path absolutePath = path.toAbsolutePath();
+        System.out.println(absolutePath);
         Parameters params = new Parameters();
         FileBasedConfigurationBuilder<XMLConfiguration> builder = new FileBasedConfigurationBuilder<>(XMLConfiguration.class)
                 .configure(params.xml()

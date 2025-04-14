@@ -76,7 +76,7 @@ executeBenchmarkWeights () {
             touch "results/testFiles/${name}/case-${i}(${j})/output.out"
 
             echo java -jar benchbase.jar -b "${bch}Histories" -c "experiments/${name}/$/${name}Histories-${i}_config.xml" -d "results/testFiles/${name}/case-${i}(${j})" --create=true --load=true --execute=true
-            java &> "results/testFiles/${name}/case-${i}(${j})/output.out" -jar benchbase.jar -b "${bch}Histories" -c "experiments/${name}/${name}Histories-${i}_config.xml" -d "results/testFiles/${name}/case-${i}(${j})" --create=true --load=true --execute=true
+            #java &> "results/testFiles/${name}/case-${i}(${j})/output.out" -jar benchbase.jar -b "${bch}Histories" -c "experiments/${name}/${name}Histories-${i}_config.xml" -d "results/testFiles/${name}/case-${i}(${j})" --create=true --load=true --execute=true
         done
     done
 

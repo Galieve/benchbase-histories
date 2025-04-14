@@ -1,8 +1,7 @@
 # TODO: Use a multi-stage build to build the fullimage from the devcontainer.
 
 # Use a smaller base image that only has the jre, not the full jdk.
-#FROM --platform=linux eclipse-temurin:17-jre AS fullimage
-FROM eclipse-temurin:17-jre AS fullimage
+FROM eclipse-temurin:23-jre AS fullimage
 
 LABEL org.opencontainers.image.source = "https://github.com/cmu-db/benchbase/"
 
@@ -17,6 +16,15 @@ RUN groupadd --non-unique --gid ${CONTAINERUSER_GID} containergroup \
     && useradd --non-unique --create-home --no-user-group --comment 'Container User' \
         --uid ${CONTAINERUSER_UID} --gid ${CONTAINERUSER_GID} containeruser
 RUN mkdir -p /benchbase/results && chown -R containeruser:containergroup /benchbase/results
+
+RUN apt-get update && apt-get -y install bash
+
+#RUN apt-get update && apt-get -y install xmlstarlet
+
+#RUN apt update && apt -y upgrade && apt -y install python3-pip && apt -y install python3.11-venv
+
+#RUN apt -y install python3-pandas python3-numpy python3-matplotlib
+
 USER containeruser
 WORKDIR /benchbase
 VOLUME /benchbase/results

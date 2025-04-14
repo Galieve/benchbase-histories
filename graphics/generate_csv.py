@@ -57,7 +57,7 @@ def load_json(name, subfolder=""):
 
 
 def setSourceDir():
-    os.chdir(os.path.expanduser("../target/benchbase-postgres"))
+    os.chdir(os.path.expanduser(".."))
 
 
 def getPath(folder):
@@ -351,9 +351,9 @@ def compute_statistics(folder, benchmarkName, size):
     df.to_csv(folder + '/' + benchmarkName + '-stats.csv', index=False, encoding='utf-8', sep=";", float_format='%.3f')
 
 
-def generate_scala(benchmark, case, lim):
-
-    isolations = ['SER', 'RC', 'SI+RC']
+def generate_scala(benchmark, case, isolations, lim):
+    #isolations = ['SI+RC']
+    #isolations = ['SER', 'RC', 'SI+RC']
     #isolations = ['SER', 'SI', 'RC', 'SER+RC', 'SI+RC']
 
     folder_basic = "results/testFiles/" + case + "/" + benchmark +"Histories"
@@ -375,9 +375,9 @@ def generate_scala(benchmark, case, lim):
     #compute_statistics(folder_basic, benchmark, 5)
 
 
-def generate_invalid(benchmark, lim):
+def generate_invalid(benchmark, case, lim):
 
-    folder = "results/testFiles/Invalid/" + benchmark +"Histories"
+    folder = "results/testFiles/" + case + "/" + benchmark +"Histories"
 
     file_map = listFiles(folder, 'Naive-vs-CheckSOBound')
     naives = {}
@@ -408,11 +408,17 @@ if __name__ == "__main__":
 
     print('Number of arguments:', len(sys.argv), 'arguments.')
     print('Argument List:', str(sys.argv))
-    for i in range(1, len(sys.argv), 3):
-        generate_scala(sys.argv[i], sys.argv[i+1], sys.argv[i+2])
+    for i in range(1, len(sys.argv), 5):
+        scala=sys.argv[i+4]
+        isolations=sys.argv[i + 2].split(',')
+        print(isolations)
+        if scala == 'true':
+            generate_scala(sys.argv[i], sys.argv[i+1], isolations, sys.argv[i+3])
+        else:
+            generate_invalid(sys.argv[i], sys.argv[i+1], sys.argv[i+3])
 
-    generate_invalid("twitter", 20)
-    generate_invalid("tpcc", 20)
+    #generate_invalid("twitter", 20)
+    #generate_invalid("tpcc", 20)
 
 
 
