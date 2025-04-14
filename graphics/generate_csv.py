@@ -147,7 +147,7 @@ def getFileMap(folder):
             outputs[case] = {}
 
         files[case][example] = [f for f in listdir(path_case)
-                                if (isfile(join(path_case, f)) and "histories" in join(path_case, f))]
+                            if (isfile(join(path_case, f)) and "histories.csv" in join(path_case, f))]
         jsons[case][example] = [f for f in listdir(path_case)
                                 if (isfile(join(path_case, f)) and "summary" in join(path_case, f))]
         outputs[case][example] = [f for f in listdir(path_case)
