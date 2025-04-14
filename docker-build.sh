@@ -18,4 +18,4 @@ python3 -m venv .venv
 source .venv/bin/activate
 .venv/bin/pip3 install pandas seaborn matplotlib
 
-./docker/benchbase/build-full-image.sh
+./docker/benchbase/build-artifact-image.sh
