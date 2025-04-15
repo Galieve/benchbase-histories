@@ -90,7 +90,7 @@ executeTwitter() {
         python3 generate_csv.py 'twitter' 'Transaction-Scalability' "SER,SI,RC,SER+RC,SI+RC" $END_TRANSACTION 'true' \
         && cd ..
     source .venv/bin/activate && cd graphics && \
-        python3 graphics.py 'twitter' 'Transaction-Scalability' "SER,SI,RC,SER+RC,SI+RC" $END_TRANSACTION \
+        python3 graphics.py 'twitter' 'Transaction-Scalability' "SER,SI,RC,SER+RC,SI+RC" "transactions" $END_TRANSACTION \
         && cd ..
 
 }
@@ -122,7 +122,7 @@ executeTPCC() {
         python3 generate_csv.py 'tpcc' 'Transaction-Scalability' "SER,SI,RC,SER+RC,SI+RC" $END_TRANSACTION 'true' \
         && cd ..
     source .venv/bin/activate && cd graphics && \
-        python3 graphics.py 'tpcc' 'Transaction-Scalability' "SER,SI,RC,SER+RC,SI+RC" $END_TRANSACTION \
+        python3 graphics.py 'tpcc' 'Transaction-Scalability' "SER,SI,RC,SER+RC,SI+RC" "transactions" $END_TRANSACTION \
         && cd ..
 
 }
@@ -153,7 +153,7 @@ executeTPCCPC() {
         python3 generate_csv.py 'tpccPC' 'Transaction-Scalability' "SER,SI,RC,SER+RC,SI+RC" $END_TRANSACTION 'true' \
         && cd ..
     source .venv/bin/activate && cd graphics && \
-        python3 graphics.py 'tpccPC' 'Transaction-Scalability' "SER,SI,RC,SER+RC,SI+RC" $END_TRANSACTION \
+        python3 graphics.py 'tpccPC' 'Transaction-Scalability' "SER,SI,RC,SER+RC,SI+RC" "transactions" $END_TRANSACTION \
         && cd ..
 
 }

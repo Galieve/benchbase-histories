@@ -114,7 +114,7 @@ executeTwitter() {
         python3 generate_csv.py 'twitter' 'Session-Scalability' "SER,SI,RC,SER+RC,SI+RC" $END_SESSION 'true' \
         && cd ..
     source .venv/bin/activate && cd graphics && \
-        python3 graphics.py 'twitter' 'Session-Scalability' "SER,SI,RC,SER+RC,SI+RC" $END_SESSION \
+        python3 graphics.py 'twitter' 'Session-Scalability' "SER,SI,RC,SER+RC,SI+RC" "sessions" $END_SESSION \
         && cd ..
 
 }
@@ -146,7 +146,7 @@ executeTPCC() {
         python3 generate_csv.py 'tpcc' 'Session-Scalability' "SER,SI,RC,SER+RC,SI+RC" $END_SESSION 'true' \
         && cd ..
     source .venv/bin/activate && cd graphics && \
-        python3 graphics.py 'tpcc' 'Session-Scalability' "SER,SI,RC,SER+RC,SI+RC" $END_SESSION \
+        python3 graphics.py 'tpcc' 'Session-Scalability' "SER,SI,RC,SER+RC,SI+RC" "sessions" $END_SESSION \
         && cd ..
 
 }
@@ -177,7 +177,7 @@ executeTPCCPC() {
         python3 generate_csv.py 'tpccPC' 'Session-Scalability' "SER,SI,RC,SER+RC,SI+RC" $END_SESSION 'true' \
         && cd ..
     source .venv/bin/activate && cd graphics && \
-        python3 graphics.py 'tpccPC' 'Session-Scalability' "SER,SI,RC,SER+RC,SI+RC" $END_SESSION \
+        python3 graphics.py 'tpccPC' 'Session-Scalability' "SER,SI,RC,SER+RC,SI+RC" "sessions" $END_SESSION \
         && cd ..
 
 }

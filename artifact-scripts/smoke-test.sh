@@ -108,7 +108,7 @@ executeTPCCSessions() {
     executeBenchmark "tpccHistories" "Smoke-Test-Sessions" "SER" $END_SESSION algorithms isolationMap "fileSessions"
 
     source .venv/bin/activate && cd graphics && python3 generate_csv.py 'tpcc' 'Smoke-Test-Sessions' "SER,SI+RC" $END_SESSION 'true' && cd ..
-    source .venv/bin/activate && cd graphics && python3 graphics.py 'tpcc' 'Smoke-Test-Sessions' "SER,SI+RC" $END_SESSION && cd ..
+    source .venv/bin/activate && cd graphics && python3 graphics.py 'tpcc' 'Smoke-Test-Sessions' "SER,SI+RC" "sessions" $END_SESSION && cd ..
 
 
 }
@@ -126,7 +126,7 @@ executeTPCCTransactions() {
 
 
     source .venv/bin/activate && cd graphics && python3 generate_csv.py 'tpcc' 'Smoke-Test-Transactions' "SER,SI+RC" $END_TRANSACTION 'true' && cd ..
-    source .venv/bin/activate && cd graphics && python3 graphics.py 'tpcc' 'Smoke-Test-Transactions' "SER,SI+RC" $END_TRANSACTION && cd ..
+    source .venv/bin/activate && cd graphics && python3 graphics.py 'tpcc' 'Smoke-Test-Transactions' "SER,SI+RC" "transactions" $END_TRANSACTION && cd ..
 
 
 }
