@@ -91,7 +91,7 @@ def plot_statistics(folder, name, name_plot, fig_name, n):
     return
 
 
-def plot_benchmark(folder, name, isolations, name_plot, fig_name, x_label, n):
+def plot_benchmark(folder, name, isolations, object_type, name_plot, fig_name, n):
 
 
     df_all = pd.DataFrame()
@@ -114,9 +114,9 @@ def plot_benchmark(folder, name, isolations, name_plot, fig_name, x_label, n):
     maxY = 61
     # ax = df["Time (ms)"].plot()
     # df['Running time (ms)'].plot()
-    plt.title('Benchmark ' + name_plot + ' with ' + n + ' sessions')
+    plt.title('Benchmark ' + name_plot + ' with ' + n + ' ' + object_type)
 
-    ax.set_xlabel(x_label)
+    ax.set_xlabel(object_type.capitalize())
     ax.set_ylabel('Time (s)')
     ax.set_ylim([0 - 0.25, maxY + 0.25])
 
@@ -299,11 +299,13 @@ if __name__ == "__main__":
 
     benchmark = ['Transaction-Scalability', 'Session-Scalability']
 
-    for i in range(1, len(sys.argv), 4):
+    for i in range(1, len(sys.argv), 5):
         name = sys.argv[i]
         case = sys.argv[i+1]
         isolations = sys.argv[i + 2].split(',')
         sessions = sys.argv[i + 3]
         folder = "results/testFiles/" + case + "/" + name + "Histories/"
+        object_type = sys.argv[i + 4]
 
-        plot_benchmark(folder, name, isolations, print_names[name], figures_names[name] + '-scala-sessions', 'Sessions', sessions)
+        plot_benchmark(folder, name, isolations, object_type, print_names[name],
+                       figures_names[name] + '-scalability-'+object_type, sessions)
