@@ -303,9 +303,10 @@ if __name__ == "__main__":
         name = sys.argv[i]
         case = sys.argv[i+1]
         isolations = sys.argv[i + 2].split(',')
-        sessions = sys.argv[i + 3]
+        object_type = sys.argv[i + 3]
+
+        sessions = sys.argv[i + 4]
         folder = "results/testFiles/" + case + "/" + name + "Histories/"
-        object_type = sys.argv[i + 4]
 
         plot_benchmark(folder, name, isolations, object_type, print_names[name],
                        figures_names[name] + '-scalability-'+object_type, sessions)
