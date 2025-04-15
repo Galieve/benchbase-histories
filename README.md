@@ -36,7 +36,7 @@ For example, for executing the smoke test, use:
 bash artifact-scripts/smoke-test.sh
 ```
 
-The results of each experiment appear in the folder ``results/testFiles/$experiment``.
+The outcome of each experiment appears in the folder ``results``. For example, the configuration files for the first part of the smoke test, ``Smoke-Test-Sessions``, appear in ``results/config/Smoke-Test-Sessions``whereas all data of the experiment appears in ``results/testFiles/Smoke-Test-Sessions``.
 
 **Notes**
 
@@ -44,7 +44,7 @@ The time limit set is to 60s per case. It is recommended to be careful when runn
 
 ### Smoke test
 
-The smoke test executes a reduced version of the other three experiments. After running the smoke test, three folders (`Smoke-Test-Sessions`, `Smoke-Test-Transactions` and `Smoke-Test-Comparisons`) are created, each with one sub-folder per benchmark (`twitter`, `tpcc` and `tpccPC` when applicable). In the case of `Smoke-Test-Sessions` and `Smoke-Test-Transactions`, each benchmark folder contains one sub-folder per isolation configuration (`SER`, `SI`, `RC`, `SER+RC`, `SI+RC`); while in the other case, only one sub-folder, (`Naive-vs-CheckSOBound`). At the end of the execution, each of these sub-folders contains two csvs. One, describing all information about all concerning executions and a second one, summarizing the executions showing the average result per case. In addition, in the case of the experiments `Smoke-Test-Sessions`, `Smoke-Test-Transactions` each benchmark folder  (`twitter`, `tpcc` and `tpccPC`) contain a `.png` describing the evolution of Algorithm 3 runtime (corresponding to Figures 5 & 6).
+The smoke test executes a reduced version of the other three experiments. After running the smoke test, three folders (`Smoke-Test-Sessions`, `Smoke-Test-Transactions` and `Smoke-Test-Comparisons`) are created, each with one sub-folder per benchmark (`twitter`, `tpcc` and `tpccPC` when applicable). In the case of `Smoke-Test-Sessions` and `Smoke-Test-Transactions`, each benchmark folder contains one sub-folder per isolation configuration (`SER`, `SI+RC`); while in the other case, only one sub-folder, (`Naive-vs-CheckSOBound`). At the end of the execution, each of these sub-folders contains two csvs. One, describing all information about all concerning executions and a second one, summarizing the executions showing the average result per case. In addition, in the case of the experiments `Smoke-Test-Sessions`, `Smoke-Test-Transactions` each benchmark folder  (`twitter`, `tpcc` and `tpccPC`) contain a `.png` describing the evolution of Algorithm 3 runtime (corresponding to a smoke-version of Figures 5 & 6).
 
 More information can be found in the file [smoke-test.sh](artifact-scripts/smoke-test.sh).
 
@@ -53,7 +53,7 @@ More information can be found in the file [smoke-test.sh](artifact-scripts/smoke
 
 ### First and Second Experiment: Session and Transaction Scalability
 
-The following commands shall be run for obtaining their correspondent outcome. As in the smoke test, the result of the execution can be found in the folder `results/testFiles`.
+The following commands shall be run for obtaining their correspondent outcome.
 
 ```
 bash artifact-scripts/session-scalability.sh
@@ -63,15 +63,19 @@ bash artifact-scripts/session-scalability.sh
 bash artifact-scripts/transaction-scalability.sh
 ```
 
+Please observe that now we consider five isolation configurations (`SER`, `SI`, `RC`, `SER+RC`, `SI+RC`), as described in the paper, and larger size of programs. We refer to our submission, the smoke-test description above and [the session script](artifact-scripts/session-scalability.sh) and [the transaction script](artifact-scripts/session-scalability.sh) for more information.
+
+
 
 ### Third Experiment: Baseline Comparison
 
 
-The following command shall be run; the result of the execution can be found in the folder `results/testFiles`.
+The following command shall be run.
 
 ```
 bash artifact-scripts/comparison-naive-checksobound.sh
 ```
+We refer to our submission, the smoke-test description above and [the comparison script](artifact-scripts/comparison-naive-checksobound.sh) for more information.
 
 ## Do it yourself!
 
@@ -88,7 +92,7 @@ This artifact was tested on a Mac OS. We recommend using a Mac/Linux OS version 
 Docker is required. Please install it for your OS. The necessary documentation is available [here](https://docs.docker.com/get-docker).
 
 
-Currently, our scripts are not fully integrated in Docker. The user may require installing xmlstarlet and python3.
+Currently, our scripts are not fully integrated in Docker. The user may require installing python3 for generating the csvs and graphics.
 
 <!---
 This artifact was tested on a Linux OS. We recommend using a new Unix/Linux OS version with updated software.
