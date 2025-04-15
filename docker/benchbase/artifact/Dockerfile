@@ -19,8 +19,6 @@ RUN mkdir -p /benchbase/results && chown -R containeruser:containergroup /benchb
 
 RUN apt-get update && apt-get -y install bash
 
-RUN apt-get update && apt-get -y install bash
-
 RUN apt-get update && apt-get -y install xmlstarlet
 
 RUN apt-get update && apt-get -y upgrade && apt-get -y install python3-pip && apt-get -y install python3-venv
@@ -29,7 +27,7 @@ RUN apt-get -y install python3-pandas python3-numpy python3-matplotlib python3-s
 
 RUN python3 -m venv .venv
 
-RUN ls -al
+#RUN ls -al
 RUN . .venv/bin/activate
 
 USER containeruser

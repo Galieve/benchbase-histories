@@ -33,16 +33,6 @@ fi
 EXAMPLES=1
 END_SESSION=5
 
-fileSessions() {
-    local name=$1
-    local optionsFolderName=$2
-    local isolationCase=$3
-    local i=$4
-    xmlstarlet ed -L -u "/parameters/works/work/rate" -v "10" "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml"
-    xmlstarlet ed -L -u "/parameters/terminals" -v "$i" "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml"
-    xmlstarlet ed -L -u "/parameters/works/work/time" -v "$i" "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml"
-}
-
 executeBenchmark () {
 
     local name=$1
@@ -52,21 +42,12 @@ executeBenchmark () {
     local -n options=$5
     local -n isolations=$6
 
-
-
     for i in $(seq 1 $end); do
 
         mkdir -p "results/config/${optionsFolderName}/${name}/${isolationCase}/"
 
         cp "config/postgres/sample_${name}_config.xml" "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml"
-        fileSessions "$name" "$optionsFolderName" "$isolationCase" "$i"
-
-        for (( j=1; j<${#isolations[@]} ; j+=2 )) ; do
-            transaction=${isolations[j-1]}
-            isolation=${isolations[j]}
-            #echo xmlstarlet ed -L -s "/parameters/transactiontypes/transactiontype[name=\"""${transaction}""\"]" -t elem -n "isolation" -v "$isolation" "results/config/${name}/${isolationCase}/${name}-${i}_config.xml"
-            xmlstarlet ed -L -s "/parameters/transactiontypes/transactiontype[name=\"""${transaction}""\"]" -t elem -n "isolation" -v "$isolation" "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml"
-        done
+        config_file=$(echo "fileSessions" "$name" "$optionsFolderName" "$isolationCase" "$i" "${isolations[@]}")
 
         for j in $(seq 1 $EXAMPLES); do
 
@@ -74,28 +55,33 @@ executeBenchmark () {
             mkdir -p "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})"
 
             if [ "${CLEAR_OLD_EXPERIMENTS}" == 'true' ]; then
-                rm -rf "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})/*"
+                rm -rf "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})/"*
             fi
 
             touch "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})/output.out"
 
+            echo ./docker/benchbase/run-artifact-image.sh \
+                                 -b "${name}" \
+                                 -c "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml" \
+                                 -d "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})" \
+                                 "${options[@]}" --create=true --load=true --execute=true
 
 
-             echo ./docker/benchbase/run-artifact-image.sh \
-                 -b "${name}" \
-                 -c "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml" \
-                 -d "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})" \
-                 "${options[@]}" --create=true --load=true --execute=true
+            file="results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})/output.out"
+
+            args_run=$(echo \
+                        "-b" "${name}" \
+                        "-c" "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml" \
+                        "-d" "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})" \
+                        "${options[@]}" \
+                        "--create=true" "--load=true" "--execute=true")
+
+            args="${file};${args_run};${config_file}"
 
 
             SKIP_TESTS=${SKIP_TESTS:-true} EXTRA_DOCKER_ARGS="--network=host $EXTRA_DOCKER_ARGS" \
             ./docker/benchbase/run-artifact-image.sh \
-                &> "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})/output.out" \
-                -b "${name}" \
-                -c "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml" \
-                -d "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})" \
-                "${options[@]}"  \
-                --create=true --load=true --execute=true
+                "$args"
         done
     done
 

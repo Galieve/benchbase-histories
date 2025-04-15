@@ -38,6 +38,9 @@ END_SESSION=3
 END_TRANSACTION=5
 END_COMPARISON=3
 
+
+
+
 executeBenchmark () {
 
     local name=$1
@@ -54,14 +57,7 @@ executeBenchmark () {
         mkdir -p "results/config/${optionsFolderName}/${name}/${isolationCase}/"
 
         cp "config/postgres/sample_${name}_config.xml" "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml"
-        $commandFiles "$name" "$optionsFolderName" "$isolationCase" "$i"
-
-        for (( j=1; j<${#isolations[@]} ; j+=2 )) ; do
-            transaction=${isolations[j-1]}
-            isolation=${isolations[j]}
-            #echo xmlstarlet ed -L -s "/parameters/transactiontypes/transactiontype[name=\"""${transaction}""\"]" -t elem -n "isolation" -v "$isolation" "results/config/${name}/${isolationCase}/${name}-${i}_config.xml"
-            xmlstarlet ed -L -s "/parameters/transactiontypes/transactiontype[name=\"""${transaction}""\"]" -t elem -n "isolation" -v "$isolation" "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml"
-        done
+        config_file=$(echo "$commandFiles" "$name" "$optionsFolderName" "$isolationCase" "$i" "${isolations[@]}")
 
         for j in $(seq 1 $EXAMPLES); do
 
@@ -81,44 +77,24 @@ executeBenchmark () {
                                  "${options[@]}" --create=true --load=true --execute=true
 
 
-            #SKIP_TESTS=${SKIP_TESTS:-true} EXTRA_DOCKER_ARGS="--network=host $EXTRA_DOCKER_ARGS" \
-            #./docker/benchbase/run-artifact-image.sh \
+            file="results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})/output.out"
 
-             #./docker/benchbase/run-full-image.sh \
-                        #    &> "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})/output.out" \
+            args_run=$(echo \
+                        "-b" "${name}" \
+                        "-c" "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml" \
+                        "-d" "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})" \
+                        "${options[@]}" \
+                        "--create=true" "--load=true" "--execute=true")
 
-            #java \
-            #    &> "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})/output.out" \
-            #    -jar ./profiles/${BENCHBASE_PROFILE}/benchbase.jar \
+            args="${file};${args_run};${config_file}"
+
+
             SKIP_TESTS=${SKIP_TESTS:-true} EXTRA_DOCKER_ARGS="--network=host $EXTRA_DOCKER_ARGS" \
             ./docker/benchbase/run-artifact-image.sh \
-                &> "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})/output.out" \
-                -b "${name}" \
-                -c "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml" \
-                -d "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})" \
-                "${options[@]}"  \
-                --create=true --load=true --execute=true
+                "$args"
         done
     done
 
-}
-
-fileSessions() {
-    local name=$1
-    local optionsFolderName=$2
-    local isolationCase=$3
-    local i=$4
-    xmlstarlet ed -L -u "/parameters/works/work/rate" -v "10" "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml"
-    xmlstarlet ed -L -u "/parameters/terminals" -v "$i" "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml"
-    xmlstarlet ed -L -u "/parameters/works/work/time" -v "$i" "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml"
-}
-
-fileTransactions() {
-    local name=$1
-    local optionsFolderName=$2
-    local isolationCase=$3
-    local i=$4
-    xmlstarlet ed -L -u "/parameters/works/work/rate" -v "$i" "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml"
 }
 
 executeTPCCSessions() {

@@ -504,11 +504,6 @@ public class DBWorkload {
     }
 
     public static XMLConfiguration buildConfiguration(String filename) throws ConfigurationException {
-        System.out.println("Working Directory = " + System.getProperty("user.dir"));
-        System.out.println(filename);
-        Path path = Paths.get(filename);
-        Path absolutePath = path.toAbsolutePath();
-        System.out.println(absolutePath);
         Parameters params = new Parameters();
         FileBasedConfigurationBuilder<XMLConfiguration> builder = new FileBasedConfigurationBuilder<>(XMLConfiguration.class)
                 .configure(params.xml()
