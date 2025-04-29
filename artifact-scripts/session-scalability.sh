@@ -60,13 +60,6 @@ executeBenchmark () {
 
             touch "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})/output.out"
 
-            echo ./docker/benchbase/run-artifact-image.sh \
-                                 -b "${name}" \
-                                 -c "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml" \
-                                 -d "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})" \
-                                 "${options[@]}" --create=true --load=true --execute=true
-
-
             file="results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})/output.out"
 
             args_run=$(echo \
@@ -110,12 +103,19 @@ executeTwitter() {
 
     executeBenchmark "twitterHistories" "Session-Scalability" "SER+RC" $END_SESSION algorithms isolationMap
 
+
+
     source .venv/bin/activate && cd graphics && \
         python3 generate_csv.py 'twitter' 'Session-Scalability' "SER,SI,RC,SER+RC,SI+RC" $END_SESSION 'true' \
         && cd ..
     source .venv/bin/activate && cd graphics && \
         python3 graphics.py 'twitter' 'Session-Scalability' "SER,SI,RC,SER+RC,SI+RC" "sessions" $END_SESSION \
         && cd ..
+
+    ./docker/benchbase/run-artifact-image.sh \
+        "python;generate_csv.py twitter Session-Scalability SER,SI,RC,SER+RC,SI+RC $END_SESSION true"
+    ./docker/benchbase/run-artifact-image.sh \
+        "python;graphics.py twitter Session-Scalability SER,SI,RC,SER+RC,SI+RC sessions $END_SESSION"
 
 }
 
@@ -142,12 +142,12 @@ executeTPCC() {
 
     executeBenchmark "tpccHistories" "Session-Scalability" "SER+RC" $END_SESSION algorithms isolationMap
 
-    source .venv/bin/activate && cd graphics && \
-        python3 generate_csv.py 'tpcc' 'Session-Scalability' "SER,SI,RC,SER+RC,SI+RC" $END_SESSION 'true' \
-        && cd ..
-    source .venv/bin/activate && cd graphics && \
-        python3 graphics.py 'tpcc' 'Session-Scalability' "SER,SI,RC,SER+RC,SI+RC" "sessions" $END_SESSION \
-        && cd ..
+
+
+    ./docker/benchbase/run-artifact-image.sh \
+        "python;generate_csv.py tpcc Session-Scalability SER,SI,RC,SER+RC,SI+RC $END_SESSION true"
+    ./docker/benchbase/run-artifact-image.sh \
+        "python;graphics.py tpcc Session-Scalability SER,SI,RC,SER+RC,SI+RC sessions $END_SESSION"
 
 }
 
@@ -173,12 +173,11 @@ executeTPCCPC() {
 
     executeBenchmark "tpccPCHistories" "Session-Scalability" "SER+RC" $END_SESSION algorithms isolationMap
 
-    source .venv/bin/activate && cd graphics && \
-        python3 generate_csv.py 'tpccPC' 'Session-Scalability' "SER,SI,RC,SER+RC,SI+RC" $END_SESSION 'true' \
-        && cd ..
-    source .venv/bin/activate && cd graphics && \
-        python3 graphics.py 'tpccPC' 'Session-Scalability' "SER,SI,RC,SER+RC,SI+RC" "sessions" $END_SESSION \
-        && cd ..
+
+    ./docker/benchbase/run-artifact-image.sh \
+        "python;generate_csv.py tpccPC Session-Scalability SER,SI,RC,SER+RC,SI+RC $END_SESSION true"
+    ./docker/benchbase/run-artifact-image.sh \
+        "python;graphics.py tpccPC Session-Scalability SER,SI,RC,SER+RC,SI+RC sessions $END_SESSION"
 
 }
 

@@ -61,7 +61,11 @@ def setSourceDir():
 
 
 def getPath(folder):
-    return os.getcwd() + "/" + folder
+    cwd = os.getcwd()
+    if cwd == "/" :
+        return "/" + folder
+    else:
+        return os.getcwd() + "/" + folder
 
 
 def fix_encoding(path, csvfile):
@@ -356,7 +360,7 @@ def generate_scala(benchmark, case, isolations, lim):
     #isolations = ['SER', 'RC', 'SI+RC']
     #isolations = ['SER', 'SI', 'RC', 'SER+RC', 'SI+RC']
 
-    folder_basic = "results/testFiles/" + case + "/" + benchmark +"Histories"
+    folder_basic = "benchbase/results/testFiles/" + case + "/" + benchmark +"Histories"
 
     for iso in isolations:
         print(case + " -  " + benchmark + " - " + iso)
@@ -377,7 +381,7 @@ def generate_scala(benchmark, case, isolations, lim):
 
 def generate_invalid(benchmark, case, lim):
 
-    folder = "results/testFiles/" + case + "/" + benchmark +"Histories"
+    folder = "benchbase/results/testFiles/" + case + "/" + benchmark +"Histories"
 
     file_map = listFiles(folder, 'Naive-vs-CheckSOBound')
     naives = {}

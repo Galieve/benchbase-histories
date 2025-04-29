@@ -16,13 +16,20 @@ Our artifact is split into different parts following the architecture of BenchBa
 
 ## Build
 
-To build CheckSOBound, we recommend using the script `docker-build.sh`.
+We provide a built image in Docker for ARM and AMD.     For loading the image, use one of the commands below. The volume of the image is the `/benchbase/results` directory.
 
 ```bash
-bash docker-build.sh
+bash docker load < benchbase-artifact-postgres_arm64.tar
 ```
 
-This command builds the CheckSOBound on a Docker container and prepares it. The volume of the Docker is /benchbase/results directory. For building it in local, use script `local-build.sh` instead. For more information, we refer to [BenchBase instructions](BenchBase-README.md).
+or
+
+```bash
+bash docker load < benchbase-artifact-postgres_amd64.tar
+```
+
+
+ For building it in local, use script `local-build.sh` instead. For more information, we refer to [BenchBase instructions](BenchBase-README.md).
 
 
 ## Run
@@ -91,10 +98,10 @@ This artifact was tested on a Mac OS. We recommend using a Mac/Linux OS version 
 
 Docker is required. Please install it for your OS. The necessary documentation is available [here](https://docs.docker.com/get-docker).
 
-
+<!---
 Currently, our scripts are not fully integrated in Docker. The user may require installing python3 for generating the csvs and graphics.
 
-<!---
+
 This artifact was tested on a Linux OS. We recommend using a new Unix/Linux OS version with updated software.
 
 Docker is required. Please install it for your OS. The necessary documentation is available [here](https://docs.docker.com/get-docker) and then follow the [post installation steps](https://docs.docker.com/engine/install/linux-postinstall) so that you can run `docker` commands without admin privileges or sudo.

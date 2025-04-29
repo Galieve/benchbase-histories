@@ -36,7 +36,7 @@ preamble
 EXAMPLES=1
 END_SESSION=3
 END_TRANSACTION=5
-END_COMPARISON=3
+END_COMPARISON=2
 
 
 
@@ -70,13 +70,6 @@ executeBenchmark () {
 
             touch "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})/output.out"
 
-            echo ./docker/benchbase/run-artifact-image.sh \
-                                 -b "${name}" \
-                                 -c "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml" \
-                                 -d "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})" \
-                                 "${options[@]}" --create=true --load=true --execute=true
-
-
             file="results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})/output.out"
 
             args_run=$(echo \
@@ -86,12 +79,11 @@ executeBenchmark () {
                         "${options[@]}" \
                         "--create=true" "--load=true" "--execute=true")
 
-            args="${file};${args_run};${config_file}"
+            args="benchbase;${file};${args_run};${config_file}"
 
 
             SKIP_TESTS=${SKIP_TESTS:-true} EXTRA_DOCKER_ARGS="--network=host $EXTRA_DOCKER_ARGS" \
-            ./docker/benchbase/run-artifact-image.sh \
-                "$args"
+                ./docker/benchbase/run-artifact-image.sh "$args"
         done
     done
 
@@ -107,8 +99,12 @@ executeTPCCSessions() {
     isolationMap=("OrderStatusHistory" "TRANSACTION_SERIALIZABLE" "DeliveryHistory" "TRANSACTION_SERIALIZABLE" "StockLevelHistory" "TRANSACTION_SERIALIZABLE" "NewOrderHistory" "TRANSACTION_SERIALIZABLE" "PaymentHistory" "TRANSACTION_SERIALIZABLE")
     executeBenchmark "tpccHistories" "Smoke-Test-Sessions" "SER" $END_SESSION algorithms isolationMap "fileSessions"
 
-    source .venv/bin/activate && cd graphics && python3 generate_csv.py 'tpcc' 'Smoke-Test-Sessions' "SER,SI+RC" $END_SESSION 'true' && cd ..
-    source .venv/bin/activate && cd graphics && python3 graphics.py 'tpcc' 'Smoke-Test-Sessions' "SER,SI+RC" "sessions" $END_SESSION && cd ..
+
+    ./docker/benchbase/run-artifact-image.sh "python;generate_csv.py tpcc Smoke-Test-Sessions SER,SI+RC $END_SESSION true"
+    ./docker/benchbase/run-artifact-image.sh "python;graphics.py tpcc Smoke-Test-Sessions SER,SI+RC sessions $END_SESSION"
+
+    #source .venv/bin/activate && cd graphics && python3 generate_csv.py 'tpcc' 'Smoke-Test-Sessions' "SER,SI+RC" $END_SESSION 'true' && cd ..
+    #source .venv/bin/activate && cd graphics && python3 graphics.py 'tpcc' 'Smoke-Test-Sessions' "SER,SI+RC" "sessions" $END_SESSION && cd ..
 
 
 }
@@ -124,9 +120,11 @@ executeTPCCTransactions() {
     isolationMap=("OrderStatusHistory" "TRANSACTION_SERIALIZABLE" "DeliveryHistory" "TRANSACTION_SERIALIZABLE" "StockLevelHistory" "TRANSACTION_SERIALIZABLE" "NewOrderHistory" "TRANSACTION_SERIALIZABLE" "PaymentHistory" "TRANSACTION_SERIALIZABLE")
     executeBenchmark "tpccHistories" "Smoke-Test-Transactions" "SER" $END_TRANSACTION algorithms isolationMap "fileTransactions"
 
+    ./docker/benchbase/run-artifact-image.sh "python;generate_csv.py tpcc Smoke-Test-Transactions SER,SI+RC $END_TRANSACTION true"
+    ./docker/benchbase/run-artifact-image.sh "python;graphics.py tpcc Smoke-Test-Transactions SER,SI+RC transactions $END_TRANSACTION"
 
-    source .venv/bin/activate && cd graphics && python3 generate_csv.py 'tpcc' 'Smoke-Test-Transactions' "SER,SI+RC" $END_TRANSACTION 'true' && cd ..
-    source .venv/bin/activate && cd graphics && python3 graphics.py 'tpcc' 'Smoke-Test-Transactions' "SER,SI+RC" "transactions" $END_TRANSACTION && cd ..
+    #source .venv/bin/activate && cd graphics && python3 generate_csv.py 'tpcc' 'Smoke-Test-Transactions' "SER,SI+RC" $END_TRANSACTION 'true' && cd ..
+    #source .venv/bin/activate && cd graphics && python3 graphics.py 'tpcc' 'Smoke-Test-Transactions' "SER,SI+RC" "transactions" $END_TRANSACTION && cd ..
 
 
 }
@@ -138,7 +136,7 @@ executeTPCCComparisons() {
 
     executeBenchmark "tpccHistories" "Smoke-Test-Comparisons" "Naive-vs-CheckSOBound" $END_COMPARISON algorithms isolationMap "fileTransactions"
 
-    source .venv/bin/activate && cd graphics && python3 generate_csv.py 'tpcc' 'Smoke-Test-Comparisons' "" $END_COMPARISON 'false' && cd ..
+    ./docker/benchbase/run-artifact-image.sh "python;generate_csv.py tpcc Smoke-Test-Comparisons '' $END_COMPARISON false"
 
 }
 

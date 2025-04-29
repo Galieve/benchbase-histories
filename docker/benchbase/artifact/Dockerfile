@@ -21,25 +21,30 @@ RUN apt-get update && apt-get -y install bash
 
 RUN apt-get update && apt-get -y install xmlstarlet
 
-RUN apt-get update && apt-get -y upgrade && apt-get -y install python3-pip && apt-get -y install python3-venv
+RUN apt-get update && apt-get -y upgrade && apt-get -y install python3-pip python3-venv
 
-RUN apt-get -y install python3-pandas python3-numpy python3-matplotlib python3-seaborn
+RUN apt-get -y install python3-pandas python3-numpy python3-seaborn python3-matplotlib
 
+RUN apt-get -y install texlive texlive-latex-extra texlive-fonts-recommended cm-super dvipng
+
+#RUN apt-get -y install texlive texlive-latex-extra texlive-fonts-recommended cm-super dvipng
 RUN python3 -m venv .venv
 
-#RUN ls -al
 RUN . .venv/bin/activate
+
+RUN .venv/bin/pip3 install pandas seaborn matplotlib
+
 
 USER containeruser
 WORKDIR /benchbase
 VOLUME /benchbase/results
 
+
 # Only copy the content necessary for running (not building) benchbase over to the image.
 # These files should have been built using the devcontainer by the
 # build-full-image.sh script.
+
 COPY --chown=containeruser:containergroup . /benchbase/
-
-
 #ENTRYPOINT [ "/bin/bash" ]
 
 ENTRYPOINT ["/benchbase/entrypoint.sh"]

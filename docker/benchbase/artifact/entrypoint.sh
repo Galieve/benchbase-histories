@@ -36,6 +36,12 @@ fileTransactions() {
     done
 }
 
+
+python_scripts() {
+    local args=$1
+    source  ../.venv/bin/activate && python3 graphics/$args
+}
+
 oldIFS=$IFS
 # Set the IFS variable to the delimiter
 IFS=';'
@@ -43,26 +49,35 @@ IFS=';'
 newargs=($*)
 # Restore the original value of IFS
 IFS=$oldIFS
-output_arg=${newargs[0]}
-benchbase_args=${newargs[1]}
-file_args=${newargs[2]}
+file_type=${newargs[0]}
+
+
+BENCHBASE_PROFILE="${BENCHBASE_PROFILE:-postgres}"
+#cd /benchbase
 
 set -eu
 
-BENCHBASE_PROFILE="${BENCHBASE_PROFILE:-postgres}"
-cd /benchbase
-echo "INFO: Using environment variable BENCHBASE_PROFILE=${BENCHBASE_PROFILE} with args: $benchbase_args" >&2
-if ! [ -f "profiles/${BENCHBASE_PROFILE}/benchbase.jar" ]; then
-    echo "ERROR: Couldn't find profile '${BENCHBASE_PROFILE}' in container image." >&2
-    exit 1
+if [[ "$file_type" == "python" ]]; then
+    python_scripts "${newargs[1]}"
+else
+    output_arg=${newargs[1]}
+    benchbase_args=${newargs[2]}
+    file_args=${newargs[3]}
+
+    echo "INFO: Using environment variable BENCHBASE_PROFILE=${BENCHBASE_PROFILE} with args: $benchbase_args" >&2
+    if ! [ -f "profiles/${BENCHBASE_PROFILE}/benchbase.jar" ]; then
+        echo "ERROR: Couldn't find profile '${BENCHBASE_PROFILE}' in container image." >&2
+        exit 1
+    fi
+    cd ./profiles/${BENCHBASE_PROFILE}/
+    if ! [ -d results/ ] || ! [ -w results/ ]; then
+        echo "ERROR: The results directory either doesn't exist or isn't writable." >&2
+    fi
+
+    $file_args
+
+    exec java -jar benchbase.jar &> $output_arg $benchbase_args
+
 fi
-cd ./profiles/${BENCHBASE_PROFILE}/
-if ! [ -d results/ ] || ! [ -w results/ ]; then
-    echo "ERROR: The results directory either doesn't exist or isn't writable." >&2
-fi
 
 
-
-$file_args
-
-exec java -jar benchbase.jar &> $output_arg $benchbase_args

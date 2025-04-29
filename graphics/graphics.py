@@ -35,7 +35,12 @@ def set_source_dir():
 
 
 def get_path(folder):
-    return os.getcwd() + "/" + folder
+    cwd = os.getcwd()
+    if cwd == "/" :
+        return "/" + folder
+    else:
+        return os.getcwd() + "/" + folder
+    #return os.getcwd() + "/" + folder
 
 
 def load_csv(name, subfolder=""):
@@ -306,7 +311,7 @@ if __name__ == "__main__":
         object_type = sys.argv[i + 3]
 
         sessions = sys.argv[i + 4]
-        folder = "results/testFiles/" + case + "/" + name + "Histories/"
+        folder = "benchbase/results/testFiles/" + case + "/" + name + "Histories/"
 
         plot_benchmark(folder, name, isolations, object_type, print_names[name],
                        figures_names[name] + '-scalability-'+object_type, sessions)

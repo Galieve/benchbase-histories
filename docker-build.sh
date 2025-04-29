@@ -14,8 +14,4 @@ export CLEAN_BUILD="false"
 # When rebuilding, whether or not to run the unit tests.
 export SKIP_TESTS="true"
 
-python3 -m venv .venv
-source .venv/bin/activate
-.venv/bin/pip3 install pandas seaborn matplotlib
-
 bash docker/benchbase/build-artifact-image.sh

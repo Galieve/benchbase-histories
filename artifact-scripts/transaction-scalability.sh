@@ -34,13 +34,6 @@ executeBenchmark () {
 
             touch "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})/output.out"
 
-            echo ./docker/benchbase/run-artifact-image.sh \
-                                 -b "${name}" \
-                                 -c "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml" \
-                                 -d "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})" \
-                                 "${options[@]}" --create=true --load=true --execute=true
-
-
             file="results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})/output.out"
 
             args_run=$(echo \
@@ -86,12 +79,11 @@ executeTwitter() {
 
     executeBenchmark "twitterHistories" "Transaction-Scalability" "SER+RC" $END_TRANSACTION algorithms isolationMap
 
-    source .venv/bin/activate && cd graphics && \
-        python3 generate_csv.py 'twitter' 'Transaction-Scalability' "SER,SI,RC,SER+RC,SI+RC" $END_TRANSACTION 'true' \
-        && cd ..
-    source .venv/bin/activate && cd graphics && \
-        python3 graphics.py 'twitter' 'Transaction-Scalability' "SER,SI,RC,SER+RC,SI+RC" "transactions" $END_TRANSACTION \
-        && cd ..
+
+    ./docker/benchbase/run-artifact-image.sh \
+        "python;generate_csv.py twitter Transaction-Scalability SER,SI,RC,SER+RC,SI+RC $END_TRANSACTION true"
+    ./docker/benchbase/run-artifact-image.sh \
+        "python;graphics.py twitter Transaction-Scalability SER,SI,RC,SER+RC,SI+RC transactions $END_TRANSACTION"
 
 }
 
@@ -118,12 +110,11 @@ executeTPCC() {
 
     executeBenchmark "tpccHistories" "Transaction-Scalability" "SER+RC" $END_TRANSACTION algorithms isolationMap
 
-    source .venv/bin/activate && cd graphics && \
-        python3 generate_csv.py 'tpcc' 'Transaction-Scalability' "SER,SI,RC,SER+RC,SI+RC" $END_TRANSACTION 'true' \
-        && cd ..
-    source .venv/bin/activate && cd graphics && \
-        python3 graphics.py 'tpcc' 'Transaction-Scalability' "SER,SI,RC,SER+RC,SI+RC" "transactions" $END_TRANSACTION \
-        && cd ..
+
+    ./docker/benchbase/run-artifact-image.sh \
+        "python;generate_csv.py tpcc Transaction-Scalability SER,SI,RC,SER+RC,SI+RC $END_TRANSACTION true"
+    ./docker/benchbase/run-artifact-image.sh \
+        "python;graphics.py tpcc Transaction-Scalability SER,SI,RC,SER+RC,SI+RC transactions $END_TRANSACTION"
 
 }
 
@@ -149,12 +140,11 @@ executeTPCCPC() {
 
     executeBenchmark "tpccPCHistories" "Transaction-Scalability" "SER+RC" $END_TRANSACTION algorithms isolationMap
 
-    source .venv/bin/activate && cd graphics && \
-        python3 generate_csv.py 'tpccPC' 'Transaction-Scalability' "SER,SI,RC,SER+RC,SI+RC" $END_TRANSACTION 'true' \
-        && cd ..
-    source .venv/bin/activate && cd graphics && \
-        python3 graphics.py 'tpccPC' 'Transaction-Scalability' "SER,SI,RC,SER+RC,SI+RC" "transactions" $END_TRANSACTION \
-        && cd ..
+
+    ./docker/benchbase/run-artifact-image.sh \
+        "python;generate_csv.py tpccPC Transaction-Scalability SER,SI,RC,SER+RC,SI+RC $END_TRANSACTION true"
+    ./docker/benchbase/run-artifact-image.sh \
+        "python;graphics.py tpccPC Transaction-Scalability SER,SI,RC,SER+RC,SI+RC transactions $END_TRANSACTION"
 
 }
 

@@ -61,13 +61,6 @@ executeBenchmark () {
 
             touch "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})/output.out"
 
-            echo ./docker/benchbase/run-artifact-image.sh \
-                                 -b "${name}" \
-                                 -c "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml" \
-                                 -d "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})" \
-                                 "${options[@]}" --create=true --load=true --execute=true
-
-
             file="results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})/output.out"
 
             args_run=$(echo \
@@ -99,9 +92,9 @@ executeTwitter() {
 
     executeBenchmark "twitterHistories" "Comparison" "Naive-vs-CheckSOBound" $END_COMPARISON algorithms isolationMap
 
-    source .venv/bin/activate && cd graphics && \
-        python3 generate_csv.py 'twitter' 'Comparison' '' $END_COMPARISON 'false' \
-        && cd ..
+
+    ./docker/benchbase/run-artifact-image.sh \
+        "python;generate_csv.py twitter Comparison '' $END_COMPARISON false"
 
 
 
@@ -114,9 +107,9 @@ executeTPCC() {
 
     executeBenchmark "tpccHistories" 'Comparison' "Naive-vs-CheckSOBound" $END_COMPARISON algorithms isolationMap
 
-    source .venv/bin/activate && cd graphics && \
-        python3 generate_csv.py 'tpcc' 'Comparison' '' $END_COMPARISON 'false' \
-        && cd ..
+
+    ./docker/benchbase/run-artifact-image.sh \
+        "python;generate_csv.py tpcc Comparison '' $END_COMPARISON false"
 
 
 }

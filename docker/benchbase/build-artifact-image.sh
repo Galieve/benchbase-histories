@@ -73,6 +73,7 @@ function create_image() {
         ln -s ../../config/$profile "tmp/profiles/$profile/config"
         ln -s . tmp/profiles/$profile/config/$profile
         ln -s ../plugin.xml tmp/config/$profile/
+        cp -al "$rootdir/graphics" tmp/graphics/
     done
 
     # Make a copy of the entrypoint script that changes the default profile to
@@ -95,11 +96,24 @@ function create_image() {
     local target_image_tag_args=$(echo "-t benchbase-artifact:latest ${image_tag_args:-}" | sed "s/benchbase-artifact:/$image_name:/g")
 
     set -x
-    docker build $docker_build_args \
-        --build-arg BUILDKIT_INLINE_CACHE=1 \
-        --build-arg="http_proxy=${http_proxy:-}" --build-arg="https_proxy=${https_proxy:-}" --build-arg="no_proxy=${no_proxy:-}" \
-        --build-arg CONTAINERUSER_UID="$CONTAINERUSER_UID" --build-arg CONTAINERUSER_GID="$CONTAINERUSER_GID" \
-        $target_image_tag_args -f "$scriptdir/artifact/Dockerfile" "$scriptdir/artifact/tmp/"
+
+    docker buildx build $docker_build_args --platform linux/arm64 --load\
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --build-arg="http_proxy=${http_proxy:-}" --build-arg="https_proxy=${https_proxy:-}" --build-arg="no_proxy=${no_proxy:-}" \
+            --build-arg CONTAINERUSER_UID="$CONTAINERUSER_UID" --build-arg CONTAINERUSER_GID="$CONTAINERUSER_GID" \
+            $target_image_tag_args -f "$scriptdir/artifact/Dockerfile" "$scriptdir/artifact/tmp/"
+
+    docker save -o ../../../benchbase-artifact-postgres_arm64.tar benchbase-artifact-postgres:latest
+
+    docker buildx build $docker_build_args --platform linux/amd64 --load\
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --build-arg="http_proxy=${http_proxy:-}" --build-arg="https_proxy=${https_proxy:-}" --build-arg="no_proxy=${no_proxy:-}" \
+            --build-arg CONTAINERUSER_UID="$CONTAINERUSER_UID" --build-arg CONTAINERUSER_GID="$CONTAINERUSER_GID" \
+            $target_image_tag_args -f "$scriptdir/artifact/Dockerfile" "$scriptdir/artifact/tmp/"
+
+    docker save -o ../../../benchbase-artifact-postgres_amd64.tar benchbase-artifact-postgres:latest
+
+
     set +x
 
     # Cleanup the temporary copies.
@@ -111,6 +125,7 @@ function create_image() {
 if [ $(echo "$BENCHBASE_PROFILES" | wc -w) -gt 1 ]; then
     create_image "$BENCHBASE_PROFILES"
 fi
+
 # Now create split images as well.
 for profile in $BENCHBASE_PROFILES; do
     create_image $profile
