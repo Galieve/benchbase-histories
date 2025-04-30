@@ -23,23 +23,58 @@ preamble() {
 
     EXTRA_DOCKER_ARGS=''
 
-    bash "./docker/${BENCHBASE_PROFILE}-${PROFILE_VERSION}/up.sh"
-
-
     CREATE_DB_ARGS='--create=true --load=true'
     if [ "${SKIP_LOAD_DB:-false}" == 'true' ]; then
         CREATE_DB_ARGS=''
     fi
 }
+
 preamble
+
+cd benchbase/
 
 EXAMPLES=1
 END_SESSION=3
 END_TRANSACTION=5
 END_COMPARISON=2
 
+export BENCHBASE_PROFILE="postgres"
 
 
+fileSessions() {
+    local name=$1
+    local optionsFolderName=$2
+    local isolationCase=$3
+    local i=$4
+
+    local -a isolations=(${@:5})
+
+    xmlstarlet ed -L -u "/parameters/works/work/rate" -v "10" "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml"
+    xmlstarlet ed -L -u "/parameters/terminals" -v "$i" "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml"
+    xmlstarlet ed -L -u "/parameters/works/work/time" -v "$i" "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml"
+
+    for (( k=1; k<${#isolations[@]} ; k+=2 )) ; do
+        transaction=${isolations[k-1]}
+        isolation=${isolations[k]}
+        xmlstarlet ed -L -s "/parameters/transactiontypes/transactiontype[name=\"""${transaction}""\"]" \
+          -t elem -n "isolation" -v "$isolation" "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml"
+    done
+}
+
+fileTransactions() {
+    local name=$1
+    local optionsFolderName=$2
+    local isolationCase=$3
+    local i=$4
+    local -a isolations=(${@:5})
+    xmlstarlet ed -L -u "/parameters/works/work/rate" -v "$i" "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml"
+
+    for (( k=1; k<${#isolations[@]} ; k+=2 )) ; do
+        transaction=${isolations[k-1]}
+        isolation=${isolations[k]}
+        xmlstarlet ed -L -s "/parameters/transactiontypes/transactiontype[name=\"""${transaction}""\"]" -t elem -n "isolation" -v "$isolation" "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml"
+    done
+}
 
 executeBenchmark () {
 
@@ -50,6 +85,8 @@ executeBenchmark () {
     local -n options=$5
     local -n isolations=$6
     local commandFiles=$7
+
+
 
 
     for i in $(seq 1 $end); do
@@ -81,9 +118,29 @@ executeBenchmark () {
 
             args="benchbase;${file};${args_run};${config_file}"
 
+            echo "INFO: Using environment variable BENCHBASE_PROFILE=${BENCHBASE_PROFILE} with args: $args_run" >&2
+            if ! [ -f "profiles/${BENCHBASE_PROFILE}/benchbase.jar" ]; then
+                echo "ERROR: Couldn't find profile '${BENCHBASE_PROFILE}' in container image." >&2
+                exit 1
+            fi
+            cd ./profiles/${BENCHBASE_PROFILE}/ || exit
+            if ! [ -d results/ ] || ! [ -w results/ ]; then
+                echo "ERROR: The results directory either doesn't exist or isn't writable." >&2
+            fi
 
-            SKIP_TESTS=${SKIP_TESTS:-true} EXTRA_DOCKER_ARGS="--network=host $EXTRA_DOCKER_ARGS" \
-                ./docker/benchbase/run-artifact-image.sh "$args"
+            $config_file
+
+            java &> "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})/output.out" \
+              -jar benchbase.jar -b "${name}" \
+              "-c" "results/config/${optionsFolderName}/${name}/${isolationCase}/${name}-${i}_config.xml" \
+              "-d" "results/testFiles/${optionsFolderName}/${name}/${isolationCase}/case-${i}(${j})" \
+               "${options[@]}" \
+              --create=true --load=true --execute=true
+
+            cd ../..
+
+#            SKIP_TESTS=${SKIP_TESTS:-true} EXTRA_DOCKER_ARGS="--network=host $EXTRA_DOCKER_ARGS" \
+#                ./docker/benchbase/run-artifact-image.sh "$args"
         done
     done
 
@@ -100,11 +157,10 @@ executeTPCCSessions() {
     executeBenchmark "tpccHistories" "Smoke-Test-Sessions" "SER" $END_SESSION algorithms isolationMap "fileSessions"
 
 
-    ./docker/benchbase/run-artifact-image.sh "python;generate_csv.py tpcc Smoke-Test-Sessions SER,SI+RC $END_SESSION true"
-    ./docker/benchbase/run-artifact-image.sh "python;graphics.py tpcc Smoke-Test-Sessions SER,SI+RC sessions $END_SESSION"
-
-    #source .venv/bin/activate && cd graphics && python3 generate_csv.py 'tpcc' 'Smoke-Test-Sessions' "SER,SI+RC" $END_SESSION 'true' && cd ..
-    #source .venv/bin/activate && cd graphics && python3 graphics.py 'tpcc' 'Smoke-Test-Sessions' "SER,SI+RC" "sessions" $END_SESSION && cd ..
+    #./docker/benchbase/run-artifact-image.sh "python;generate_csv.py tpcc Smoke-Test-Sessions SER,SI+RC $END_SESSION true"
+    #./docker/benchbase/run-artifact-image.sh "python;graphics.py tpcc Smoke-Test-Sessions SER,SI+RC sessions $END_SESSION"
+    source ../.venv/bin/activate && python3 graphics/generate_csv.py 'tpcc' 'Smoke-Test-Sessions' "SER,SI+RC" $END_SESSION 'true'
+    source ../.venv/bin/activate && python3 graphics/graphics.py 'tpcc' 'Smoke-Test-Sessions' "SER,SI+RC" "sessions" $END_SESSION
 
 
 }
@@ -120,11 +176,11 @@ executeTPCCTransactions() {
     isolationMap=("OrderStatusHistory" "TRANSACTION_SERIALIZABLE" "DeliveryHistory" "TRANSACTION_SERIALIZABLE" "StockLevelHistory" "TRANSACTION_SERIALIZABLE" "NewOrderHistory" "TRANSACTION_SERIALIZABLE" "PaymentHistory" "TRANSACTION_SERIALIZABLE")
     executeBenchmark "tpccHistories" "Smoke-Test-Transactions" "SER" $END_TRANSACTION algorithms isolationMap "fileTransactions"
 
-    ./docker/benchbase/run-artifact-image.sh "python;generate_csv.py tpcc Smoke-Test-Transactions SER,SI+RC $END_TRANSACTION true"
-    ./docker/benchbase/run-artifact-image.sh "python;graphics.py tpcc Smoke-Test-Transactions SER,SI+RC transactions $END_TRANSACTION"
+    #./docker/benchbase/run-artifact-image.sh "python;generate_csv.py tpcc Smoke-Test-Transactions SER,SI+RC $END_TRANSACTION true"
+    #./docker/benchbase/run-artifact-image.sh "python;graphics.py tpcc Smoke-Test-Transactions SER,SI+RC transactions $END_TRANSACTION"
 
-    #source .venv/bin/activate && cd graphics && python3 generate_csv.py 'tpcc' 'Smoke-Test-Transactions' "SER,SI+RC" $END_TRANSACTION 'true' && cd ..
-    #source .venv/bin/activate && cd graphics && python3 graphics.py 'tpcc' 'Smoke-Test-Transactions' "SER,SI+RC" "transactions" $END_TRANSACTION && cd ..
+    source ../.venv/bin/activate && python3 graphics/generate_csv.py 'tpcc' 'Smoke-Test-Transactions' "SER,SI+RC" $END_TRANSACTION 'true'
+    source ../.venv/bin/activate && python3 graphics/graphics.py 'tpcc' 'Smoke-Test-Transactions' "SER,SI+RC" "transactions" $END_TRANSACTION
 
 
 }
@@ -136,13 +192,12 @@ executeTPCCComparisons() {
 
     executeBenchmark "tpccHistories" "Smoke-Test-Comparisons" "Naive-vs-CheckSOBound" $END_COMPARISON algorithms isolationMap "fileTransactions"
 
-    ./docker/benchbase/run-artifact-image.sh "python;generate_csv.py tpcc Smoke-Test-Comparisons '' $END_COMPARISON false"
+    source ../.venv/bin/activate && python3 graphics/generate_csv.py 'tpcc' 'Smoke-Test-Comparisons' "SER,SI+RC" $END_COMPARISON 'false'
+
+    #./docker/benchbase/run-artifact-image.sh "python;generate_csv.py tpcc Smoke-Test-Comparisons '' $END_COMPARISON false"
 
 }
 
 executeTPCCSessions
 executeTPCCTransactions
 executeTPCCComparisons
-
-
-

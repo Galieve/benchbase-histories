@@ -36,18 +36,26 @@ bash docker load < benchbase-artifact-postgres_amd64.tar
 
 ---
 
-We include four scripts in the ``artifact-scripts`` directory  for running the project: ``smoke-test.sh``, ``session-scala.sh``, ``transaction-scala.sh``, and ``ser-rc-naive-csob.sh``; corresponding to the smoke-test, and the first, second and third experiment presented in section 6. It suffices to run them using ``bash`` for obtaining the results.
+We include four scripts in the ``artifact-scripts`` directory  for running the project: ``smoke-test.sh``, ``session-scala.sh``, ``transaction-scala.sh``, and ``ser-rc-naive-csob.sh``; corresponding to the smoke-test, and the first, second and third experiment presented in section 6. 
+
+First, we run the docker container using the following command:
+
+````
+bash artifact-scripts/init.sh
+````
+
+After that, it suffices to run them using ``bash`` for obtaining the results.
 
 For example, for executing the smoke test, use:
 ```
-bash artifact-scripts/smoke-test.sh
+bash smoke-test.sh
 ```
 
 The outcome of each experiment appears in the folder ``results``. For example, the configuration files for the first part of the smoke test, ``Smoke-Test-Sessions``, appear in ``results/config/Smoke-Test-Sessions``whereas all data of the experiment appears in ``results/testFiles/Smoke-Test-Sessions``.
 
 **Notes**
 
-The time limit set is to 60s per case. It is recommended to be careful when running each script as it may take more than 1 day to execute all experiments. The smoke-test is already predefined for having a better user experience. As the scripts are not fully run in Docker, please use `bash` over `sh`.
+The time limit set is to 60s per case. It is recommended to be careful when running each script as it may take more than 1 day to execute all experiments. The smoke-test is already predefined for having a better user experience. As the scripts rely on modern bash syntax, please use `bash` over `sh`.
 
 ### Smoke test
 
@@ -57,17 +65,16 @@ More information can be found in the file [smoke-test.sh](artifact-scripts/smoke
 
 
 
-
 ### First and Second Experiment: Session and Transaction Scalability
 
-The following commands shall be run for obtaining their correspondent outcome.
+The following commands shall be run inside the docker container for obtaining their correspondent outcome.
 
 ```
-bash artifact-scripts/session-scalability.sh
+bash session-scalability.sh
 ```
 
 ```
-bash artifact-scripts/transaction-scalability.sh
+bash transaction-scalability.sh
 ```
 
 Please observe that now we consider five isolation configurations (`SER`, `SI`, `RC`, `SER+RC`, `SI+RC`), as described in the paper, and larger size of programs. We refer to our submission, the smoke-test description above and [the session script](artifact-scripts/session-scalability.sh) and [the transaction script](artifact-scripts/session-scalability.sh) for more information.
@@ -80,7 +87,7 @@ Please observe that now we consider five isolation configurations (`SER`, `SI`, 
 The following command shall be run.
 
 ```
-bash artifact-scripts/comparison-naive-checksobound.sh
+bash comparison-naive-checksobound.sh
 ```
 We refer to our submission, the smoke-test description above and [the comparison script](artifact-scripts/comparison-naive-checksobound.sh) for more information.
 
@@ -96,7 +103,7 @@ If the reader wants to test their own programs, we recommend to read both the [B
 
 This artifact was tested on a Mac OS. We recommend using a Mac/Linux OS version with updated software.
 
-Docker is required. Please install it for your OS. The necessary documentation is available [here](https://docs.docker.com/get-docker).
+Docker is required. Please install it for your OS. The necessary documentation is available [here](https://docs.docker.com/get-docker). Docker composed is also required. For Mac OS and Windows distributions, docker composed is included with docker. For Linux distributions it is required to install it separately (see more information [here](https://github.com/docker/compose/tree/main?tab=readme-ov-file#linux))
 
 <!---
 Currently, our scripts are not fully integrated in Docker. The user may require installing python3 for generating the csvs and graphics.

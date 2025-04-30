@@ -37,4 +37,4 @@ docker run -it --rm \
     --env=http_proxy="${http_proxy:-}" --env=https_proxy="${https_proxy:-}" --env=no_proxy="${no_proxy:-}" \
     --env BENCHBASE_PROFILE="$BENCHBASE_PROFILE" \
     --user "$CONTAINERUSER_UID:$CONTAINERUSER_GID" \
-    -v "$SRC_DIR/results:/benchbase/results" benchbase-artifact-$BENCHBASE_PROFILE:latest "$*"
+    -v "$SRC_DIR/results:/benchbase/results" benchbase-artifact-$BENCHBASE_PROFILE:latest
