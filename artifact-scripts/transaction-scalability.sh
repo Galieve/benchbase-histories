@@ -123,7 +123,7 @@ executeBenchmark () {
 
 executeTwitter() {
 
-    local -a options=("-ch" "CSOB")
+    local -a algorithms=("-ch" "CSOB")
     local -a isolationMap=("GetTweetHistory" "TRANSACTION_SERIALIZABLE" "GetTweetsFromFollowingHistory" "TRANSACTION_SERIALIZABLE" "GetFollowersHistory" "TRANSACTION_SERIALIZABLE" "GetUserTweetsHistory" "TRANSACTION_SERIALIZABLE" "InsertTweetHistory" "TRANSACTION_SERIALIZABLE")
 
     executeBenchmark "twitterHistories" "Transaction-Scalability" "SER" $END_TRANSACTION algorithms isolationMap
@@ -156,7 +156,7 @@ executeTwitter() {
 
 executeTPCC() {
 
-    local -a options=("-ch" "CSOB")
+    local -a algorithms=("-ch" "CSOB")
     local -a isolationMap=("OrderStatusHistory" "TRANSACTION_SERIALIZABLE" "DeliveryHistory" "TRANSACTION_SERIALIZABLE" "StockLevelHistory" "TRANSACTION_SERIALIZABLE" "NewOrderHistory" "TRANSACTION_SERIALIZABLE" "PaymentHistory" "TRANSACTION_SERIALIZABLE")
 
     executeBenchmark "tpccHistories" "Transaction-Scalability" "SER" $END_TRANSACTION algorithms isolationMap
@@ -190,7 +190,7 @@ executeTPCC() {
 
 executeTPCCPC() {
 
-    local -a options=("-ch" "CSOB")
+    local -a algorithms=("-ch" "CSOB")
     local -a isolationMap=("OrderStatusPCHistory" "TRANSACTION_SERIALIZABLE" "DeliveryPCHistory" "TRANSACTION_SERIALIZABLE" "StockLevelPCHistory" "TRANSACTION_SERIALIZABLE" "NewOrderPCHistory" "TRANSACTION_SERIALIZABLE" "PaymentPCHistory" "TRANSACTION_SERIALIZABLE")
     executeBenchmark "tpccPCHistories" "Transaction-Scalability" "SER" $END_TRANSACTION algorithms isolationMap
 

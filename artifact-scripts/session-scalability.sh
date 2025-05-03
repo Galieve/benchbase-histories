@@ -123,7 +123,7 @@ executeBenchmark () {
 
 executeTwitter() {
 
-    local -a options=("-ch" "CSOB")
+    local -a algorithms=("-ch" "CSOB")
     local -a isolationMap=("GetTweetHistory" "TRANSACTION_SERIALIZABLE" "GetTweetsFromFollowingHistory" "TRANSACTION_SERIALIZABLE" "GetFollowersHistory" "TRANSACTION_SERIALIZABLE" "GetUserTweetsHistory" "TRANSACTION_SERIALIZABLE" "InsertTweetHistory" "TRANSACTION_SERIALIZABLE")
 
     executeBenchmark "twitterHistories" "Session-Scalability" "SER" $END_SESSION algorithms isolationMap
@@ -146,12 +146,12 @@ executeTwitter() {
 
 
 
-    source .venv/bin/activate && cd graphics && \
-        python3 generate_csv.py 'twitter' 'Session-Scalability' "SER,SI,RC,SER+RC,SI+RC" $END_SESSION 'true' \
-        && cd ..
-    source .venv/bin/activate && cd graphics && \
-        python3 graphics.py 'twitter' 'Session-Scalability' "SER,SI,RC,SER+RC,SI+RC" "sessions" $END_SESSION \
-        && cd ..
+#    source .venv/bin/activate && cd graphics && \
+#        python3 generate_csv.py 'twitter' 'Session-Scalability' "SER,SI,RC,SER+RC,SI+RC" $END_SESSION 'true' \
+#        && cd ..
+#    source .venv/bin/activate && cd graphics && \
+#        python3 graphics.py 'twitter' 'Session-Scalability' "SER,SI,RC,SER+RC,SI+RC" "sessions" $END_SESSION \
+#        && cd ..
 
     source ../.venv/bin/activate && python3 graphics/generate_csv.py 'twitter' 'Session-Scalability' "SER,SI,RC,SER+RC,SI+RC" $END_SESSION 'true'
     source ../.venv/bin/activate && python3 graphics/graphics.py 'twitter' 'Session-Scalability' "SER,SI,RC,SER+RC,SI+RC" "sessions" $END_SESSION
@@ -166,7 +166,7 @@ executeTwitter() {
 
 executeTPCC() {
 
-    local -a options=("-ch" "CSOB")
+    local -a algorithms=("-ch" "CSOB")
     local -a isolationMap=("OrderStatusHistory" "TRANSACTION_SERIALIZABLE" "DeliveryHistory" "TRANSACTION_SERIALIZABLE" "StockLevelHistory" "TRANSACTION_SERIALIZABLE" "NewOrderHistory" "TRANSACTION_SERIALIZABLE" "PaymentHistory" "TRANSACTION_SERIALIZABLE")
 
     executeBenchmark "tpccHistories" "Session-Scalability" "SER" $END_SESSION algorithms isolationMap
@@ -200,7 +200,7 @@ executeTPCC() {
 
 executeTPCCPC() {
 
-    local -a options=("-ch" "CSOB")
+    local -a algorithms=("-ch" "CSOB")
     local -a isolationMap=("OrderStatusPCHistory" "TRANSACTION_SERIALIZABLE" "DeliveryPCHistory" "TRANSACTION_SERIALIZABLE" "StockLevelPCHistory" "TRANSACTION_SERIALIZABLE" "NewOrderPCHistory" "TRANSACTION_SERIALIZABLE" "PaymentPCHistory" "TRANSACTION_SERIALIZABLE")
     executeBenchmark "tpccPCHistories" "Session-Scalability" "SER" $END_SESSION algorithms isolationMap
 
